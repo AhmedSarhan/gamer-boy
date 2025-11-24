@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { Category } from "@/shared/types";
 
@@ -13,10 +13,40 @@ export function CategoriesSidebarClient({
   categories,
 }: CategoriesSidebarClientProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedCategories = searchParams.get("categories")?.split(",") || [];
 
   const toggleSidebar = () => setIsOpen(!isOpen);
+
+  const toggleCategory = (categorySlug: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const currentCategories = params.get("categories")?.split(",") || [];
+
+    let newCategories: string[];
+    if (currentCategories.includes(categorySlug)) {
+      // Remove category
+      newCategories = currentCategories.filter((c) => c !== categorySlug);
+    } else {
+      // Add category
+      newCategories = [...currentCategories, categorySlug];
+    }
+
+    if (newCategories.length > 0) {
+      params.set("categories", newCategories.join(","));
+    } else {
+      params.delete("categories");
+    }
+
+    // Keep search query if it exists
+    const searchQuery = params.get("q");
+    if (searchQuery) {
+      params.set("q", searchQuery);
+    }
+
+    router.replace(`/?${params.toString()}`, { scroll: false });
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -120,14 +150,13 @@ export function CategoriesSidebarClient({
                 const isActive = selectedCategories.includes(category.slug);
                 return (
                   <li key={category.id}>
-                    <Link
-                      href={`/?categories=${category.slug}`}
-                      className={`block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                    <button
+                      onClick={() => toggleCategory(category.slug)}
+                      className={`block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors ${
                         isActive
                           ? "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100"
                           : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                       }`}
-                      onClick={() => setIsOpen(false)}
                     >
                       <div className="flex items-center justify-between">
                         <span className="capitalize">{category.name}</span>
@@ -145,7 +174,7 @@ export function CategoriesSidebarClient({
                           </svg>
                         )}
                       </div>
-                    </Link>
+                    </button>
                   </li>
                 );
               })}
