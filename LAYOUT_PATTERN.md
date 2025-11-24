@@ -9,6 +9,7 @@ This project uses Next.js App Router's layout system to share common UI elements
 ### Root Layout (`src/app/layout.tsx`)
 
 The root layout contains:
+
 - **Header**: Shared navigation across all pages
 - **Main wrapper**: Consistent background and styling
 - **Font configuration**: Geist Sans and Geist Mono
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
 ### Pages (`src/app/*/page.tsx`)
 
 Pages contain only page-specific content:
+
 - No `<Header />` - it's in the layout
 - No `<main>` wrapper - it's in the layout
 - Just the page content wrapped in a container
@@ -49,21 +51,25 @@ export default function Page() {
 ## Benefits
 
 ### 1. **DRY (Don't Repeat Yourself)**
+
 - Header is defined once, used everywhere
 - No need to import/render Header on each page
 - Consistent layout across all pages
 
 ### 2. **Performance**
+
 - Layout doesn't re-render when navigating between pages
 - Only page content re-renders
 - Better performance and user experience
 
 ### 3. **Maintainability**
+
 - Change header once, affects all pages
 - Easy to add global UI elements (footer, sidebar, etc.)
 - Consistent styling and structure
 
 ### 4. **Nested Layouts**
+
 - Can create nested layouts for sections
 - Example: `/games/layout.tsx` for games-specific layout
 - Layouts compose naturally
@@ -148,6 +154,7 @@ export default function GamesLayout({ children }) {
 ```
 
 Layout hierarchy:
+
 ```
 RootLayout (Header + Main)
   └─ GamesLayout (Sidebar)
@@ -157,11 +164,13 @@ RootLayout (Header + Main)
 ## Layout vs Template
 
 ### Layout (`layout.tsx`)
+
 - **Persists** across navigation
 - **Doesn't re-render** when navigating
 - Use for: Header, Footer, Navigation
 
 ### Template (`template.tsx`)
+
 - **Re-renders** on every navigation
 - Creates new instance for each route
 - Use for: Animations, per-page state
@@ -298,4 +307,3 @@ export default function Page() {
 
 - [Next.js Layouts Documentation](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts)
 - [Next.js Templates Documentation](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts#templates)
-
