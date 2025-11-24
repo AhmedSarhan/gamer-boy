@@ -83,7 +83,7 @@ export function CategoriesSidebarClient({
           </div>
 
           {/* Categories List */}
-          <nav className="flex-1 overflow-y-auto p-4">
+          <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
             <ul className="space-y-1">
               {/* All Games */}
               <li>
