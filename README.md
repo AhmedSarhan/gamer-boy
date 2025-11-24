@@ -1,36 +1,209 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Game Hosting Website
+
+A modern game hosting website built with Next.js 15+, React, TypeScript, and Tailwind CSS. Browse and play games embedded from GameDistribution.com.
+
+## Features
+
+- 🎮 Browse games in a responsive grid layout
+- 🔍 Real-time search functionality
+- 🏷️ Filter games by category
+- 🎯 Featured/popular games section
+- 📱 Fully responsive design (mobile, tablet, desktop)
+- 🎮 Game detail pages with embedded iframe players
+- 🔍 Fullscreen game mode
+- ⚡ Optimized performance with Next.js Image optimization
+- 🧪 E2E testing with Playwright
+
+## Tech Stack
+
+- **Framework**: Next.js 15+ (App Router)
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS
+- **Code Quality**: ESLint + Prettier
+- **Testing**: Playwright (E2E)
+- **State Management**: React Context API / Zustand
+
+## Project Structure
+
+```
+gamer-boy/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   │   ├── games/        # Game detail pages
+│   │   ├── layout.tsx    # Root layout
+│   │   └── page.tsx      # Home page
+│   ├── components/        # React components
+│   │   └── games/        # Game-specific components
+│   ├── lib/              # Utilities and helpers
+│   │   └── games.ts      # Game data and functions
+│   ├── types/            # TypeScript type definitions
+│   │   └── game.ts       # Game types
+│   └── data/             # Static data (optional)
+├── e2e/                  # E2E tests (Playwright)
+├── public/               # Static assets
+└── ...
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, or pnpm
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd gamer-boy
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up Playwright browsers (for E2E testing):
+
+```bash
+npx playwright install
+```
+
+### Development
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint errors
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
+- `npm run test:e2e` - Run E2E tests
+- `npm run test:e2e:ui` - Run E2E tests with UI
+- `npm run test:e2e:headed` - Run E2E tests in headed mode
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Adding Games
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Games are stored in `src/lib/games.ts`. To add a new game:
 
-## Deploy on Vercel
+1. Visit [GameDistribution.com](https://gamedistribution.com/)
+2. Browse games and get the iframe embed code
+3. Extract the iframe URL (format: `https://html5.gamedistribution.com/[game-id]`)
+4. Add the game to the `games` array in `src/lib/games.ts`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```typescript
+{
+  id: "unique-game-id",
+  title: "Game Title",
+  description: "Game description",
+  thumbnail: "/images/game-thumbnail.jpg", // Add thumbnail to public/images/
+  iframeUrl: "https://html5.gamedistribution.com/[game-id]",
+  category: "Action", // Action, Puzzle, Arcade, Adventure, Strategy, Sports, Racing
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Game Categories
+
+- Action
+- Puzzle
+- Arcade
+- Adventure
+- Strategy
+- Sports
+- Racing
+- All (shows all games)
+
+## E2E Testing
+
+E2E tests are located in the `e2e/` directory and use Playwright.
+
+Run tests:
+
+```bash
+npm run test:e2e
+```
+
+Run tests with UI:
+
+```bash
+npm run test:e2e:ui
+```
+
+## Code Quality
+
+This project uses:
+
+- **ESLint** for linting (Next.js config + Prettier integration)
+- **Prettier** for code formatting
+- **TypeScript** strict mode (no `any` types)
+
+Format code:
+
+```bash
+npm run format
+```
+
+Check linting:
+
+```bash
+npm run lint
+```
+
+## Features Implemented
+
+- ✅ Next.js 15+ with App Router
+- ✅ TypeScript (strict mode)
+- ✅ Tailwind CSS
+- ✅ ESLint + Prettier
+- ✅ E2E testing setup (Playwright)
+- ✅ Project structure with `src/` directory
+- ✅ Type definitions for games
+- ✅ Game data utilities
+
+## Features to Implement
+
+- [ ] Home page with game grid
+- [ ] Search functionality
+- [ ] Category filtering
+- [ ] Game detail/play page
+- [ ] Responsive iframe player
+- [ ] Fullscreen mode
+- [ ] Related games section
+- [ ] Error handling
+- [ ] Loading states
+- [ ] Navigation header
+- [ ] (Optional) Dark mode
+- [ ] (Optional) Favorites (localStorage)
+- [ ] (Optional) Recently played games
+
+## Contributing
+
+1. Follow the code style (ESLint + Prettier)
+2. Write TypeScript with strict types (no `any`)
+3. Write E2E tests for new features
+4. Keep components small and focused
+5. Use Server Components by default, Client Components only when needed
+
+## License
+
+MIT
