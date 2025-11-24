@@ -2,6 +2,8 @@
 export { Header } from "./layout/header";
 export { Footer } from "./layout/footer";
 export { CategoriesSidebar } from "./layout/categories-sidebar";
+export { ThemeProvider } from "./theme-provider";
+export { ThemeToggle } from "./theme-toggle";
 
 // Shared UI components (reusable across all modules)
 export { SearchBar } from "./search-bar";

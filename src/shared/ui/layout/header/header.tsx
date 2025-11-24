@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 
 export function Header() {
   return (
@@ -88,6 +91,9 @@ export function Header() {
               />
             </svg>
           </Link>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
         </nav>
       </div>
     </header>

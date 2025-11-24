@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind v4 dark mode support - enables dark: variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,11 +15,30 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode support - both system preference and manual toggle */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #121824;
+    /* gray-900 - better contrast with cards */
+    --foreground: #f9fafb;
+    /* gray-50 - softer white */
   }
+}
+
+/* Manual dark mode toggle via class */
+.dark {
+  --background: #121824;
+  /* gray-900 - better contrast with cards */
+  --foreground: #f9fafb;
+  /* gray-50 - softer white */
+}
+
+/* Ensure light mode variables when not in dark mode */
+.light {
+  --background: #f9fafb;
+  /* gray-50 - softer than pure white */
+  --foreground: #111827;
+  /* gray-900 - better readability */
 }
 
 body {
