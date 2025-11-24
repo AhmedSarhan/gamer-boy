@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   GamePlayer,
   RelatedGames,
   GameActions,
 } from "@/modules/games/components";
 import { useTrackRecentlyPlayed } from "@/shared/hooks";
+import { RatingDisplay } from "@/shared/ui/rating-display";
+import { RatingInput } from "@/shared/ui/rating-input";
 import type { GameWithCategories } from "@/shared/types";
 
 interface GamePageClientProps {
@@ -17,6 +20,50 @@ interface GamePageClientProps {
 export function GamePageClient({ game, relatedGames }: GamePageClientProps) {
   // Track this game as recently played
   useTrackRecentlyPlayed(game.id);
+
+  // Rating state
+  const [ratingStats, setRatingStats] = useState({
+    averageRating: 0,
+    totalRatings: 0,
+    userRating: null as number | null,
+  });
+  const [isLoadingRating, setIsLoadingRating] = useState(true);
+
+  // Fetch rating stats
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const { getUserFingerprint } = await import("@/shared/lib");
+        const fingerprint = getUserFingerprint();
+
+        const response = await fetch(
+          `/api/ratings/${game.id}?fingerprint=${fingerprint}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setRatingStats({
+            averageRating: data.averageRating,
+            totalRatings: data.totalRatings,
+            userRating: data.userRating,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching rating:", error);
+      } finally {
+        setIsLoadingRating(false);
+      }
+    };
+
+    fetchRating();
+  }, [game.id]);
+
+  const handleRatingUpdate = (newAverage: number) => {
+    setRatingStats((prev) => ({
+      ...prev,
+      averageRating: newAverage,
+      totalRatings: prev.totalRatings + (prev.userRating ? 0 : 1),
+    }));
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -63,6 +110,46 @@ export function GamePageClient({ game, relatedGames }: GamePageClientProps) {
           gameSlug={game.slug}
           gameTitle={game.title}
         />
+      </div>
+
+      {/* Rating Section */}
+      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <h3 className="mb-4 text-xl font-bold text-gray-900 dark:text-gray-100">
+          Rate this game
+        </h3>
+        {isLoadingRating ? (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Average Rating Display */}
+            <div>
+              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                Average Rating
+              </p>
+              <RatingDisplay
+                averageRating={ratingStats.averageRating}
+                totalRatings={ratingStats.totalRatings}
+                size="lg"
+                showCount={true}
+              />
+            </div>
+
+            {/* User Rating Input */}
+            <div>
+              <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                Your Rating
+              </p>
+              <RatingInput
+                gameId={game.id}
+                initialRating={ratingStats.userRating || 0}
+                onRatingSubmit={handleRatingUpdate}
+                size="lg"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Categories */}

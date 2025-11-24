@@ -39,6 +39,23 @@ export const gameCategories = sqliteTable("game_categories", {
     .$defaultFn(() => new Date()),
 });
 
+// Ratings table - stores user ratings for games
+export const ratings = sqliteTable("ratings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gameId: integer("game_id")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  // Using fingerprint for anonymous user identification (IP + User Agent hash)
+  userFingerprint: text("user_fingerprint").notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   games: many(gameCategories),
@@ -46,6 +63,7 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 
 export const gamesRelations = relations(games, ({ many }) => ({
   categories: many(gameCategories),
+  ratings: many(ratings),
 }));
 
 export const gameCategoriesRelations = relations(gameCategories, ({ one }) => ({
@@ -59,7 +77,16 @@ export const gameCategoriesRelations = relations(gameCategories, ({ one }) => ({
   }),
 }));
 
+export const ratingsRelations = relations(ratings, ({ one }) => ({
+  game: one(games, {
+    fields: [ratings.gameId],
+    references: [games.id],
+  }),
+}));
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Game = typeof games.$inferSelect;
 export type NewGame = typeof games.$inferInsert;
+export type Rating = typeof ratings.$inferSelect;
+export type NewRating = typeof ratings.$inferInsert;

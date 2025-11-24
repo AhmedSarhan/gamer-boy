@@ -4,15 +4,29 @@ A modern game hosting website built with Next.js 15+, React, TypeScript, and Tai
 
 ## Features
 
+### Core Features
+
 - 🎮 Browse games in a responsive grid layout
 - 🔍 Real-time search functionality
-- 🏷️ Filter games by category
+- 🏷️ Filter games by multiple categories
 - 🎯 Featured/popular games section
 - 📱 Fully responsive design (mobile, tablet, desktop)
 - 🎮 Game detail pages with embedded iframe players
 - 🔍 Fullscreen game mode
 - ⚡ Optimized performance with Next.js Image optimization
 - 🧪 E2E testing with Playwright
+
+### Bonus Features
+
+- ⭐ **Rating System**: Anonymous 5-star rating system with browser fingerprinting
+- 🌙 **Dark Mode**: Theme toggle with localStorage persistence
+- ❤️ **Wishlist**: Save favorite games (localStorage)
+- 🕐 **Recently Played**: Track game history (localStorage)
+- 🎨 **Smooth Transitions**: Instagram-style page swipe animations
+- 📊 **Infinite Scroll**: Load more games dynamically
+- 🎯 **Game Preview**: Hover tooltips with game info
+- 🔗 **Social Sharing**: Share games on social media
+- 📂 **Categories Sidebar**: Multi-select category filtering
 
 ## Tech Stack
 
@@ -232,18 +246,68 @@ Games can have multiple genres/categories.
 
 ## E2E Testing
 
-E2E tests are located in the `e2e/` directory and use Playwright.
+This project uses **Playwright** for comprehensive E2E testing covering all major features and user flows.
 
-Run tests:
+### Test Suites
+
+- ✅ **Home Page** - Game browsing, infinite scroll, navigation
+- ✅ **Search** - Real-time search, debouncing, URL state
+- ✅ **Category Filtering** - Single/multi-select, mobile sidebar
+- ✅ **Game Detail** - Player, actions, ratings, related games
+- ✅ **Wishlist** - Add/remove favorites, persistence
+- ✅ **Recently Played** - Auto-tracking, history management
+- ✅ **Dark Mode** - Theme toggle, persistence, system preference
+- ✅ **Rating System** - Submit/update ratings, persistence
+
+See [E2E_TESTING.md](./E2E_TESTING.md) for detailed documentation.
+
+### Run Tests
 
 ```bash
+# Run all tests
 npm run test:e2e
+
+# Run with UI
+npm run test:e2e:ui
+
+# Run specific suite
+npx playwright test e2e/home-page.spec.ts
+
+# Debug mode
+npx playwright test --debug
 ```
 
-Run tests with UI:
+## Rating System
 
-```bash
-npm run test:e2e:ui
+The app includes a comprehensive 5-star rating system:
+
+- **Anonymous Ratings**: Uses browser fingerprinting (no login required)
+- **Real-time Updates**: Ratings update immediately after submission
+- **Visual Feedback**: Interactive star display with hover states
+- **Duplicate Prevention**: One rating per user per game
+- **Dark Mode Support**: Fully styled for both themes
+
+See [RATING_SYSTEM.md](./RATING_SYSTEM.md) for detailed documentation.
+
+### Quick Usage
+
+**Display ratings:**
+
+```tsx
+import { RatingDisplay } from "@/shared/ui";
+
+<RatingDisplay averageRating={4.3} totalRatings={127} size="lg" />;
+```
+
+**Allow user to rate:**
+
+```tsx
+import { RatingInput } from "@/shared/ui";
+
+<RatingInput
+  gameId={42}
+  onRatingSubmit={(newAverage) => console.log(newAverage)}
+/>;
 ```
 
 ## Code Quality
