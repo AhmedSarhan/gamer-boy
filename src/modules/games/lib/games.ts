@@ -1,6 +1,6 @@
 import { db } from "@/db/index";
 import { games, categories, gameCategories } from "@/db/schema";
-import { eq, like, and, ne, inArray } from "drizzle-orm";
+import { eq, like, and, ne, inArray, sql } from "drizzle-orm";
 import type { GameWithCategories, Category } from "@/shared/types";
 
 /**
@@ -17,6 +17,124 @@ export function generateIframeUrl(
       ? `${window.location.origin}/games/${gameSlug}`
       : `/games/${gameSlug}`;
   return `https://html5.gamedistribution.com/${gameId}/?gd_sdk_referrer_url=${encodeURIComponent(gamePageUrl)}`;
+}
+
+/**
+ * Unified function to get games with pagination, search, and category filtering
+ * This is the most efficient way to fetch games as it handles pagination at the database level
+ */
+export async function getGames({
+  search,
+  categories: categoryFilter,
+  page = 1,
+  limit = 12,
+}: {
+  search?: string;
+  categories?: string[];
+  page?: number;
+  limit?: number;
+}): Promise<{ games: GameWithCategories[]; totalCount: number }> {
+  const offset = (page - 1) * limit;
+
+  // Build the base query conditions
+  let gameIds: number[] | null = null;
+
+  // Handle category filtering first
+  if (categoryFilter && categoryFilter.length > 0) {
+    const foundCategories = await db
+      .select()
+      .from(categories)
+      .where(inArray(categories.slug, categoryFilter));
+
+    if (foundCategories.length === 0) {
+      return { games: [], totalCount: 0 };
+    }
+
+    const categoryIds = foundCategories.map((cat) => cat.id);
+    const relations = await db
+      .select()
+      .from(gameCategories)
+      .where(inArray(gameCategories.categoryId, categoryIds));
+
+    gameIds = [...new Set(relations.map((rel) => rel.gameId))];
+
+    if (gameIds.length === 0) {
+      return { games: [], totalCount: 0 };
+    }
+  }
+
+  // Build the WHERE conditions
+  const conditions = [];
+  if (search) {
+    conditions.push(like(games.title, `%${search}%`));
+  }
+  if (gameIds !== null) {
+    conditions.push(inArray(games.id, gameIds));
+  }
+
+  const whereClause =
+    conditions.length === 0
+      ? undefined
+      : conditions.length === 1
+        ? conditions[0]
+        : and(...conditions);
+
+  // Get total count
+  const countQuery = whereClause
+    ? db
+        .select({ count: sql<number>`count(*)` })
+        .from(games)
+        .where(whereClause)
+    : db.select({ count: sql<number>`count(*)` }).from(games);
+
+  const [{ count: totalCount }] = await countQuery;
+
+  // Get paginated games
+  const gamesQuery = whereClause
+    ? db.select().from(games).where(whereClause).limit(limit).offset(offset)
+    : db.select().from(games).limit(limit).offset(offset);
+
+  const paginatedGames = await gamesQuery;
+
+  if (paginatedGames.length === 0) {
+    return { games: [], totalCount: 0 };
+  }
+
+  // Get categories for these games
+  const paginatedGameIds = paginatedGames.map((game) => game.id);
+  const relations = await db
+    .select()
+    .from(gameCategories)
+    .where(inArray(gameCategories.gameId, paginatedGameIds));
+
+  const categoryIds = [...new Set(relations.map((rel) => rel.categoryId))];
+  const allCategories =
+    categoryIds.length > 0
+      ? await db
+          .select()
+          .from(categories)
+          .where(inArray(categories.id, categoryIds))
+      : [];
+
+  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
+  const gameCategoriesMap = new Map<number, typeof allCategories>();
+
+  relations.forEach((rel) => {
+    const cat = categoryMap.get(rel.categoryId);
+    if (cat) {
+      if (!gameCategoriesMap.has(rel.gameId)) {
+        gameCategoriesMap.set(rel.gameId, []);
+      }
+      gameCategoriesMap.get(rel.gameId)!.push(cat);
+    }
+  });
+
+  const gamesWithCategories = paginatedGames.map((game) => ({
+    ...game,
+    categories: gameCategoriesMap.get(game.id) || [],
+  }));
+
+  return { games: gamesWithCategories, totalCount };
 }
 
 /**

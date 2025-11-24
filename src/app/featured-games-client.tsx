@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  GameCard,
-  GameCardErrorBoundary,
-  StaggerContainer,
-  StaggerItem,
-} from "@/shared/ui";
+import { GameCard } from "@/shared/ui/game-card";
+import { GameCardErrorBoundary } from "@/shared/ui/game-card/game-card-error-boundary";
+import { StaggerContainer, StaggerItem } from "@/shared/ui/stagger-container";
 import type { GameWithCategories } from "@/shared/types";
 
 interface FeaturedGamesClientProps {

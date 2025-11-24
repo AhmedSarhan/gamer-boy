@@ -1,20 +1,13 @@
 import { Suspense } from "react";
 import { SearchBar, CategoryFilter } from "@/shared/ui";
-import {
-  getAllGames,
-  searchGames,
-  getGamesByCategory,
-  getAllCategories,
-  getFeaturedGames,
-} from "@/modules/games/lib";
+import { getAllCategories, getFeaturedGames } from "@/modules/games/lib";
 import { GamesGridInfinite } from "./games-grid-infinite";
 import { FeaturedGamesClient } from "./featured-games-client";
+import { getGames } from "@/modules/games/lib/games";
 
 interface HomePageProps {
   searchParams: Promise<{ q?: string; categories?: string }>;
 }
-
-const INITIAL_GAMES_LIMIT = 12;
 
 async function GameGrid({
   searchQuery,
@@ -23,27 +16,13 @@ async function GameGrid({
   searchQuery?: string;
   categoryFilter?: string;
 }) {
-  let allGames;
-
-  // Handle search + category filter combination
-  if (searchQuery && categoryFilter) {
-    // First get games by category, then filter by search
-    const categoryArray = categoryFilter.split(",").filter(Boolean);
-    const categoryGames = await getGamesByCategory(categoryArray);
-    allGames = categoryGames.filter((game) =>
-      game.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  } else if (searchQuery) {
-    allGames = await searchGames(searchQuery);
-  } else if (categoryFilter) {
-    const categoryArray = categoryFilter.split(",").filter(Boolean);
-    allGames = await getGamesByCategory(categoryArray);
-  } else {
-    allGames = await getAllGames();
-  }
-
-  // Get initial batch of games for SSR
-  const initialGames = allGames.slice(0, INITIAL_GAMES_LIMIT);
+  // Use the unified getGames function with pagination at database level
+  const { games: initialGames } = await getGames({
+    search: searchQuery,
+    categories: categoryFilter?.split(",").filter(Boolean),
+    page: 1,
+    limit: 12,
+  });
 
   return (
     <GamesGridInfinite

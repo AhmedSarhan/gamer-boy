@@ -70,6 +70,12 @@ export function InfiniteScroll<T>({
     };
   }, [hasMore, isLoading, threshold, loadMore]);
 
+  useEffect(() => {
+    setItems(initialItems);
+    setPage(1);
+    setHasMore(initialItems.length > 0);
+    setIsLoading(false);
+  }, [initialItems]);
   if (items.length === 0 && emptyState) {
     return <>{emptyState}</>;
   }
