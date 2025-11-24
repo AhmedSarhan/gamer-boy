@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import {
-  GameCard,
-  GameCardErrorBoundary,
   SearchBar,
   CategoryFilter,
+  GameCard,
+  GameCardErrorBoundary,
 } from "@/shared/ui";
 import {
   getAllGames,
@@ -12,10 +12,13 @@ import {
   getAllCategories,
   getFeaturedGames,
 } from "@/modules/games/lib";
+import { GamesGridInfinite } from "./games-grid-infinite";
 
 interface HomePageProps {
   searchParams: Promise<{ q?: string; categories?: string }>;
 }
+
+const INITIAL_GAMES_LIMIT = 12;
 
 async function GameGrid({
   searchQuery,
@@ -24,61 +27,34 @@ async function GameGrid({
   searchQuery?: string;
   categoryFilter?: string;
 }) {
-  let games;
+  let allGames;
 
   // Handle search + category filter combination
   if (searchQuery && categoryFilter) {
     // First get games by category, then filter by search
     const categoryArray = categoryFilter.split(",").filter(Boolean);
     const categoryGames = await getGamesByCategory(categoryArray);
-    games = categoryGames.filter((game) =>
+    allGames = categoryGames.filter((game) =>
       game.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
   } else if (searchQuery) {
-    games = await searchGames(searchQuery);
+    allGames = await searchGames(searchQuery);
   } else if (categoryFilter) {
     const categoryArray = categoryFilter.split(",").filter(Boolean);
-    games = await getGamesByCategory(categoryArray);
+    allGames = await getGamesByCategory(categoryArray);
   } else {
-    games = await getAllGames();
+    allGames = await getAllGames();
   }
 
-  if (games.length === 0) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-            No games found
-          </h3>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Try adjusting your search or filters
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Get initial batch of games for SSR
+  const initialGames = allGames.slice(0, INITIAL_GAMES_LIMIT);
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {games.map((game) => (
-        <GameCardErrorBoundary key={game.id}>
-          <GameCard game={game} />
-        </GameCardErrorBoundary>
-      ))}
-    </div>
+    <GamesGridInfinite
+      initialGames={initialGames}
+      searchQuery={searchQuery}
+      categoryFilter={categoryFilter}
+    />
   );
 }
 

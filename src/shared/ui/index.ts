@@ -9,3 +9,4 @@ export { CategoryFilter } from "./category-filter";
 export { GameCard, GameCardErrorBoundary } from "./game-card";
 export { FavoriteToggle } from "./favorite-toggle";
 export { ActionButton, type ActionButtonVariant } from "./action-button";
+export { InfiniteScroll } from "./infinite-scroll";
