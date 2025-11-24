@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Header, Footer, CategoriesSidebar, ThemeProvider } from "@/shared/ui";
+import {
+  Header,
+  Footer,
+  CategoriesSidebar,
+  ThemeProvider,
+  PageTransition,
+} from "@/shared/ui";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -39,7 +45,7 @@ export default function RootLayout({
 
             {/* Main Content */}
             <main className="flex-1 bg-gray-50 dark:bg-gray-950">
-              {children}
+              <PageTransition>{children}</PageTransition>
             </main>
           </div>
           <Footer />

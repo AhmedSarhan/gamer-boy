@@ -1,10 +1,5 @@
 import { Suspense } from "react";
-import {
-  SearchBar,
-  CategoryFilter,
-  GameCard,
-  GameCardErrorBoundary,
-} from "@/shared/ui";
+import { SearchBar, CategoryFilter } from "@/shared/ui";
 import {
   getAllGames,
   searchGames,
@@ -13,6 +8,7 @@ import {
   getFeaturedGames,
 } from "@/modules/games/lib";
 import { GamesGridInfinite } from "./games-grid-infinite";
+import { FeaturedGamesClient } from "./featured-games-client";
 
 interface HomePageProps {
   searchParams: Promise<{ q?: string; categories?: string }>;
@@ -83,25 +79,7 @@ function GameGridSkeleton() {
 
 async function FeaturedGames() {
   const featured = await getFeaturedGames(4);
-
-  if (featured.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="mb-12">
-      <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">
-        Featured Games
-      </h2>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {featured.map((game) => (
-          <GameCardErrorBoundary key={game.id}>
-            <GameCard game={game} />
-          </GameCardErrorBoundary>
-        ))}
-      </div>
-    </section>
-  );
+  return <FeaturedGamesClient games={featured} />;
 }
 
 export default async function Home({ searchParams }: HomePageProps) {
