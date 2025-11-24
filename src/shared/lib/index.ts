@@ -1,2 +1,2 @@
-// Shared library utilities
+export * from "./local-storage";
 // Add shared utility functions here

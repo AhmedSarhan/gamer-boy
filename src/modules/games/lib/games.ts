@@ -20,6 +20,63 @@ export function generateIframeUrl(
 }
 
 /**
+ * Get games by their IDs
+ * Used for fetching favorites and recently played games
+ */
+export async function getGamesByIds(
+  ids: number[]
+): Promise<GameWithCategories[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const selectedGames = await db
+    .select()
+    .from(games)
+    .where(inArray(games.id, ids));
+
+  if (selectedGames.length === 0) {
+    return [];
+  }
+
+  // Get all category relationships for these games
+  const relations = await db
+    .select()
+    .from(gameCategories)
+    .where(inArray(gameCategories.gameId, ids));
+
+  const categoryIds = [...new Set(relations.map((rel) => rel.categoryId))];
+  const allCategories =
+    categoryIds.length > 0
+      ? await db
+          .select()
+          .from(categories)
+          .where(inArray(categories.id, categoryIds))
+      : [];
+
+  // Map games with their categories, preserving the order of input IDs
+  const gamesMap = new Map(selectedGames.map((game) => [game.id, game]));
+  const categoriesMap = new Map(allCategories.map((cat) => [cat.id, cat]));
+
+  return ids
+    .map((id) => {
+      const game = gamesMap.get(id);
+      if (!game) return null;
+
+      const gameRelations = relations.filter((rel) => rel.gameId === game.id);
+      const gameCategories = gameRelations
+        .map((rel) => categoriesMap.get(rel.categoryId))
+        .filter((cat): cat is Category => cat !== undefined);
+
+      return {
+        ...game,
+        categories: gameCategories,
+      };
+    })
+    .filter((game): game is GameWithCategories => game !== null);
+}
+
+/**
  * Get all games from the database
  */
 export async function getAllGames(): Promise<GameWithCategories[]> {

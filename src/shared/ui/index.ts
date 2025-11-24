@@ -7,3 +7,5 @@ export { CategoriesSidebar } from "./layout/categories-sidebar";
 export { SearchBar } from "./search-bar";
 export { CategoryFilter } from "./category-filter";
 export { GameCard, GameCardErrorBoundary } from "./game-card";
+export { FavoriteToggle } from "./favorite-toggle";
+export { ActionButton, type ActionButtonVariant } from "./action-button";

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { GameWithCategories } from "@/shared/types";
+import { FavoriteToggle } from "../favorite-toggle/favorite-toggle";
 
 interface GameCardProps {
   game: GameWithCategories;
@@ -17,7 +18,11 @@ export function GameCard({ game }: GameCardProps) {
       href={`/games/${game.slug}`}
       className="group block overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:bg-gray-900"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+        {/* Favorite Toggle Button - Top Right Corner */}
+        <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <FavoriteToggle gameId={game.id} size="md" />
+        </div>
         {imageError ? (
           <div className="flex h-full w-full items-center justify-center bg-gray-200 dark:bg-gray-700">
             <svg

@@ -90,7 +90,7 @@ function GameGridSkeleton() {
           key={i}
           className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
         >
-          <div className="aspect-[4/3] w-full animate-pulse bg-gray-200 dark:bg-gray-800" />
+          <div className="aspect-4/3 w-full animate-pulse bg-gray-200 dark:bg-gray-800" />
           <div className="p-4">
             <div className="mb-2 h-6 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
             <div className="mb-3 h-4 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800" />

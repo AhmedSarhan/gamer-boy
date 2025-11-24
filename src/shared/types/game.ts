@@ -12,7 +12,7 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
-  createdAt: Date | null;
+  createdAt: Date;
 }
 
 export interface GameWithCategories {
@@ -22,7 +22,7 @@ export interface GameWithCategories {
   description: string;
   thumbnail: string;
   gameId: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   categories: Category[];
 }
