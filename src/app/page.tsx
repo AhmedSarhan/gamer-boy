@@ -26,7 +26,15 @@ async function GameGrid({
 }) {
   let games;
 
-  if (searchQuery) {
+  // Handle search + category filter combination
+  if (searchQuery && categoryFilter) {
+    // First get games by category, then filter by search
+    const categoryArray = categoryFilter.split(",").filter(Boolean);
+    const categoryGames = await getGamesByCategory(categoryArray);
+    games = categoryGames.filter((game) =>
+      game.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  } else if (searchQuery) {
     games = await searchGames(searchQuery);
   } else if (categoryFilter) {
     const categoryArray = categoryFilter.split(",").filter(Boolean);

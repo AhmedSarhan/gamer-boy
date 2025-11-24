@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDebounce } from "@/shared/hooks";
 
 export function SearchBar() {
@@ -10,16 +10,27 @@ export function SearchBar() {
   const initialQuery = searchParams.get("q") || "";
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
+
     if (debouncedSearchTerm) {
       params.set("q", debouncedSearchTerm);
     } else {
       params.delete("q");
     }
+
+    // router.replace(`/?${params.toString()}`, { scroll: false });
     router.push(`/?${params.toString()}`);
-  }, [debouncedSearchTerm, router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

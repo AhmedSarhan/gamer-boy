@@ -16,24 +16,41 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
     const params = new URLSearchParams(searchParams.toString());
     let currentCategories = params.get("categories")?.split(",") || [];
 
-    if (currentCategories.includes(categorySlug)) {
+    // Check if we're actually changing anything
+    const wasSelected = currentCategories.includes(categorySlug);
+
+    if (wasSelected) {
       currentCategories = currentCategories.filter((c) => c !== categorySlug);
     } else {
       currentCategories.push(categorySlug);
     }
 
-    if (currentCategories.length > 0 && currentCategories[0] !== "") {
-      params.set("categories", currentCategories.join(","));
+    // Build the new category string
+    const newCategoryString =
+      currentCategories.length > 0 && currentCategories[0] !== ""
+        ? currentCategories.join(",")
+        : "";
+
+    // Only update if there's an actual change
+    const currentCategoryString = params.get("categories") || "";
+    if (newCategoryString === currentCategoryString) {
+      return;
+    }
+
+    if (newCategoryString) {
+      params.set("categories", newCategoryString);
     } else {
       params.delete("categories");
     }
 
+    // router.replace(`/?${params.toString()}`, { scroll: false });
     router.push(`/?${params.toString()}`);
   };
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("categories");
+    // router.replace(`/?${params.toString()}`, { scroll: false });
     router.push(`/?${params.toString()}`);
   };
 
