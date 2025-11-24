@@ -18,6 +18,7 @@ A modern game hosting website built with Next.js 15+, React, TypeScript, and Tai
 
 - **Framework**: Next.js 15+ (App Router)
 - **Language**: TypeScript (strict mode)
+- **Database**: SQLite with Drizzle ORM
 - **Styling**: Tailwind CSS
 - **Code Quality**: ESLint + Prettier
 - **Testing**: Playwright (E2E)
@@ -101,37 +102,97 @@ npm start
 - `npm run test:e2e` - Run E2E tests
 - `npm run test:e2e:ui` - Run E2E tests with UI
 - `npm run test:e2e:headed` - Run E2E tests in headed mode
+- `npm run db:generate` - Generate database migrations
+- `npm run db:push` - Push schema changes to database
+- `npm run db:studio` - Open Drizzle Studio to view/edit database
+- `npm run scrape:games` - Scrape games from GameDistribution.com
 
-## Adding Games
+## Database
 
-Games are stored in `src/lib/games.ts`. To add a new game:
+This project uses **SQLite** with **Drizzle ORM** for data management. The database file (`games.db`) is created automatically when you run migrations.
 
-1. Visit [GameDistribution.com](https://gamedistribution.com/)
-2. Browse games and get the iframe embed code
-3. Extract the iframe URL (format: `https://html5.gamedistribution.com/[game-id]`)
-4. Add the game to the `games` array in `src/lib/games.ts`:
+### Viewing the Database
+
+To view and edit the database using Drizzle Studio (visual database browser):
+
+```bash
+npm run db:studio
+```
+
+This will open a web interface at `http://localhost:4983` where you can:
+
+- Browse all games and categories
+- View relationships between tables
+- Edit data directly
+- Run queries
+
+### Database Schema
+
+- **categories** table: Stores game categories (Action, Puzzle, Arcade, etc.)
+- **games** table: Stores game data with foreign key to categories
+
+### Adding Games
+
+#### Option 1: Using the Scraper Script (Recommended)
+
+The scraper has two modes:
+
+**Load from JSON (default - fast):**
+
+```bash
+npm run scrape:games
+```
+
+This loads games from `src/data/games.json` if it exists. Perfect for quick setup!
+
+**Fresh scrape from GameDistribution.com:**
+
+```bash
+npm run scrape:games:fresh
+```
+
+This will:
+
+1. Visit GameDistribution.com and scrape game listings
+2. Visit each game's individual page to extract genres
+3. Create categories from the official genre list (26 genres)
+4. Save scraped data to `src/data/games.json` for future use
+5. Insert games into the database
+
+**Note:** Fresh scraping visits individual game pages, so it takes longer but provides accurate genre data. The JSON file serves as fallback/starter data so you don't need to scrape every time.
+
+#### Option 2: Manual Addition via Drizzle Studio
+
+1. Run `npm run db:studio`
+2. Navigate to the `games` table
+3. Click "Add row" and fill in the game data
+4. Make sure to select an existing `category_id`
+
+#### Option 3: Programmatically
+
+You can add games programmatically by importing the database:
 
 ```typescript
-{
+import { db } from "@/db/index";
+import { games } from "@/db/schema";
+
+await db.insert(games).values({
   id: "unique-game-id",
   title: "Game Title",
   description: "Game description",
-  thumbnail: "/images/game-thumbnail.jpg", // Add thumbnail to public/images/
+  thumbnail: "https://example.com/thumbnail.jpg",
   iframeUrl: "https://html5.gamedistribution.com/[game-id]",
-  category: "Action", // Action, Puzzle, Arcade, Adventure, Strategy, Sports, Racing
-}
+  categoryId: "action", // Must match an existing category id
+});
 ```
 
-## Game Categories
+## Game Categories/Genres
 
-- Action
-- Puzzle
-- Arcade
-- Adventure
-- Strategy
-- Sports
-- Racing
-- All (shows all games)
+Games are categorized using the official GameDistribution.com genres:
+
+- Casual, Puzzle, Adventure, Dress-up, Racing & Driving, Shooter, Agility, Simulation, Battle, Art, Match-3, .IO, Mahjong & Connect, Strategy, Care, Sports, Cards, Football, Cooking, Bubble Shooter, Educational, Jigsaw, Merge, Boardgames, Basketball, Quiz
+
+Games can have multiple genres/categories.
 
 ## E2E Testing
 

@@ -12,9 +12,18 @@
     "format:check": "prettier --check .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "scrape:games": "tsx scripts/scrape-games.ts",
+    "scrape:games:fresh": "tsx scripts/scrape-games.ts --fresh"
   },
   "dependencies": {
+    "better-sqlite3": "^12.4.6",
+    "drizzle-kit": "^0.31.7",
+    "drizzle-orm": "^0.44.7",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0"
@@ -22,6 +31,7 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
