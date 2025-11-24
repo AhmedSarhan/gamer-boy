@@ -243,17 +243,17 @@ npm run lint
 
 ## Features to Implement
 
-- [ ] Home page with game grid
-- [ ] Search functionality
-- [ ] Category filtering
+- [x] Home page with game grid
+- [x] Search functionality
+- [x] Category filtering
+- [x] Error handling
+- [x] Loading states
+- [x] Navigation header
+- [] Dark mode
 - [ ] Game detail/play page
 - [ ] Responsive iframe player
 - [ ] Fullscreen mode
 - [ ] Related games section
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Navigation header
-- [ ] (Optional) Dark mode
 - [ ] (Optional) Favorites (localStorage)
 - [ ] (Optional) Recently played games
 

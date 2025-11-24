@@ -141,33 +141,42 @@ export async function getGameBySlug(
 }
 
 /**
- * Get games by category slug
+ * Get games by category slug (supports multiple categories)
  */
 export async function getGamesByCategory(
-  categorySlug: string
+  categorySlugs: string | string[]
 ): Promise<GameWithCategories[]> {
-  if (categorySlug === "all") {
+  const slugArray = Array.isArray(categorySlugs)
+    ? categorySlugs
+    : [categorySlugs];
+
+  if (
+    slugArray.length === 0 ||
+    slugArray.includes("all") ||
+    slugArray[0] === ""
+  ) {
     return getAllGames();
   }
 
-  // Find category by slug
-  const category = await db
+  // Find categories by slugs
+  const foundCategories = await db
     .select()
     .from(categories)
-    .where(eq(categories.slug, categorySlug))
-    .limit(1);
+    .where(inArray(categories.slug, slugArray));
 
-  if (category.length === 0) {
+  if (foundCategories.length === 0) {
     return [];
   }
 
-  // Get all game-category relationships for this category
+  const categoryIds = foundCategories.map((cat) => cat.id);
+
+  // Get all game-category relationships for these categories
   const relations = await db
     .select()
     .from(gameCategories)
-    .where(eq(gameCategories.categoryId, category[0].id));
+    .where(inArray(gameCategories.categoryId, categoryIds));
 
-  const gameIds = relations.map((rel) => rel.gameId);
+  const gameIds = [...new Set(relations.map((rel) => rel.gameId))];
   if (gameIds.length === 0) {
     return [];
   }
