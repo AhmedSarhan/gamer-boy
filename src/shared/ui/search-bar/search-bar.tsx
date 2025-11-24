@@ -1,41 +1,28 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebounce } from "@/shared/hooks";
 
 export function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const handleSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("q", value);
-      } else {
-        params.delete("q");
-      }
-      router.push(`/?${params.toString()}`);
-    },
-    [router, searchParams]
-  );
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (debouncedSearchTerm) {
+      params.set("q", debouncedSearchTerm);
+    } else {
+      params.delete("q");
+    }
+    router.push(`/?${params.toString()}`);
+  }, [debouncedSearchTerm, router, searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Debounce search
-    debounceTimerRef.current = setTimeout(() => {
-      handleSearch(value);
-    }, 300);
+    setSearchTerm(e.target.value);
   };
 
   return (

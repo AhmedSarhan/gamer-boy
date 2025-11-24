@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Category } from "@/lib/games";
+import type { Category } from "@/shared/types";
 
 interface CategoryFilterProps {
   categories: Category[];

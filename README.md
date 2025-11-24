@@ -26,24 +26,60 @@ A modern game hosting website built with Next.js 15+, React, TypeScript, and Tai
 
 ## Project Structure
 
+This project follows a modular architecture with clear separation between shared resources and feature-specific modules. See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed documentation.
+
 ```
 gamer-boy/
 ├── src/
-│   ├── app/              # Next.js App Router pages
-│   │   ├── games/        # Game detail pages
-│   │   ├── layout.tsx    # Root layout
-│   │   └── page.tsx      # Home page
-│   ├── components/        # React components
-│   │   └── games/        # Game-specific components
-│   ├── lib/              # Utilities and helpers
-│   │   └── games.ts      # Game data and functions
-│   ├── types/            # TypeScript type definitions
-│   │   └── game.ts       # Game types
-│   └── data/             # Static data (optional)
-├── e2e/                  # E2E tests (Playwright)
-├── public/               # Static assets
-└── ...
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── page.tsx           # Home page
+│   │   ├── layout.tsx         # Root layout
+│   │   ├── loading.tsx        # Loading state
+│   │   ├── error.tsx          # Error boundary
+│   │   └── not-found.tsx      # 404 page
+│   │
+│   ├── shared/                 # Shared resources across modules
+│   │   ├── ui/                # Shared UI components (kebab-case)
+│   │   │   ├── layout/header/
+│   │   │   ├── search-bar/
+│   │   │   ├── category-filter/
+│   │   │   ├── game-card/
+│   │   │   └── index.ts
+│   │   ├── hooks/             # Custom React hooks
+│   │   │   ├── use-debounce.ts
+│   │   │   └── index.ts
+│   │   ├── types/             # Shared TypeScript types
+│   │   │   ├── game.ts
+│   │   │   └── index.ts
+│   │   └── lib/               # Shared utilities
+│   │
+│   ├── modules/                # Feature modules
+│   │   └── games/             # Games module
+│   │       ├── components/    # Game-specific components
+│   │       └── lib/           # Game business logic
+│   │           ├── games.ts
+│   │           └── index.ts
+│   │
+│   ├── db/                     # Database configuration
+│   │   ├── schema.ts          # Drizzle schema
+│   │   └── index.ts           # DB instance
+│   │
+│   └── data/                   # Static/fallback data
+│       └── games.json
+│
+├── scripts/                    # Utility scripts
+│   └── scrape-games.ts
+├── e2e/                        # E2E tests
+└── public/                     # Static assets
 ```
+
+### Key Architecture Principles
+
+- **Shared Resources** (`src/shared/`): Reusable UI components, hooks, types, and utilities
+- **Feature Modules** (`src/modules/`): Self-contained feature-specific code
+- **Kebab-case Naming**: All files and folders use kebab-case (e.g., `search-bar.tsx`)
+- **Folder-per-Component**: Each component lives in its own folder with related files
+- **Barrel Exports**: Clean imports through index files
 
 ## Getting Started
 

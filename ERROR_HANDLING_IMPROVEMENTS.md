@@ -4,9 +4,10 @@
 
 ### 1. Next.js Image Configuration Error
 
-**Problem**: 
+**Problem**:
+
 ```
-Invalid src prop (https://img.gamedistribution.com/...) on `next/image`, 
+Invalid src prop (https://img.gamedistribution.com/...) on `next/image`,
 hostname "img.gamedistribution.com" is not configured under images in your `next.config.js`
 ```
 
@@ -74,6 +75,7 @@ const [imageError, setImageError] = useState(false);
 - Customizable fallback UI
 
 **Features**:
+
 - Catches rendering errors
 - Displays error state in card format
 - Maintains grid layout
@@ -81,6 +83,7 @@ const [imageError, setImageError] = useState(false);
 - Optional custom fallback prop
 
 **Usage**:
+
 ```typescript
 <GameCardErrorBoundary>
   <GameCard game={game} />
@@ -90,22 +93,26 @@ const [imageError, setImageError] = useState(false);
 ## Benefits
 
 ### 1. **Resilience**
+
 - Single game card errors don't crash the entire page
 - Users can still browse other games
 - Graceful degradation
 
 ### 2. **User Experience**
+
 - Clear visual feedback when something goes wrong
 - Maintains consistent layout
 - No blank spaces or broken layouts
 - Professional error states
 
 ### 3. **Developer Experience**
+
 - Errors are logged to console for debugging
 - Easy to identify problematic games
 - Error boundaries are reusable
 
 ### 4. **Performance**
+
 - Next.js Image optimization for external images
 - Lazy loading support
 - Proper caching strategies
@@ -175,4 +182,3 @@ Image Level (GameCard onError)
 - [ ] Cache error states to avoid repeated failures
 - [ ] Add fallback thumbnail URLs
 - [ ] Implement circuit breaker pattern for repeated failures
-

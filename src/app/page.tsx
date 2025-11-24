@@ -1,16 +1,17 @@
 import { Suspense } from "react";
-import { GameCard } from "@/components/games/GameCard";
-import { GameCardErrorBoundary } from "@/components/games/GameCardErrorBoundary";
-import { SearchBar } from "@/components/SearchBar";
-import { CategoryFilter } from "@/components/CategoryFilter";
-import { Header } from "@/components/Header";
+import {
+  GameCard,
+  GameCardErrorBoundary,
+  SearchBar,
+  CategoryFilter,
+} from "@/shared/ui";
 import {
   getAllGames,
   searchGames,
   getGamesByCategory,
   getAllCategories,
   getFeaturedGames,
-} from "@/lib/games";
+} from "@/modules/games/lib";
 
 interface HomePageProps {
   searchParams: Promise<{ q?: string; categories?: string }>;
@@ -128,64 +129,56 @@ export default async function Home({ searchParams }: HomePageProps) {
   const showFeatured = !searchQuery && !categoryFilter;
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-gray-50 dark:bg-black">
-        <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          {/* Hero Section */}
-          <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-gray-100">
-              Play Free Online Games
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400">
-              Discover thousands of exciting games across all genres. No
-              downloads, no registration - just pure fun!
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <div className="mb-12 text-center">
+        <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-gray-100">
+          Play Free Online Games
+        </h1>
+        <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+          Discover thousands of exciting games across all genres. No downloads,
+          no registration - just pure fun!
+        </p>
+      </div>
 
-          {/* Search Bar */}
-          <div className="mb-8 flex justify-center">
-            <Suspense fallback={<div className="h-12 w-full max-w-xl" />}>
-              <SearchBar />
-            </Suspense>
-          </div>
+      {/* Search Bar */}
+      <div className="mb-8 flex justify-center">
+        <Suspense fallback={<div className="h-12 w-full max-w-xl" />}>
+          <SearchBar />
+        </Suspense>
+      </div>
 
-          {/* Category Filter */}
-          <div className="mb-12">
-            <Suspense
-              fallback={
-                <div className="h-20 w-full animate-pulse bg-gray-200 dark:bg-gray-800" />
-              }
-            >
-              <CategoryFilter categories={categories} />
-            </Suspense>
-          </div>
+      {/* Category Filter */}
+      <div className="mb-12">
+        <Suspense
+          fallback={
+            <div className="h-20 w-full animate-pulse bg-gray-200 dark:bg-gray-800" />
+          }
+        >
+          <CategoryFilter categories={categories} />
+        </Suspense>
+      </div>
 
-          {/* Featured Games */}
-          {showFeatured && (
-            <Suspense fallback={<GameGridSkeleton />}>
-              <FeaturedGames />
-            </Suspense>
-          )}
+      {/* Featured Games */}
+      {showFeatured && (
+        <Suspense fallback={<GameGridSkeleton />}>
+          <FeaturedGames />
+        </Suspense>
+      )}
 
-          {/* All Games Grid */}
-          <section>
-            <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {searchQuery
-                ? `Search Results for "${searchQuery}"`
-                : categoryFilter
-                  ? "Filtered Games"
-                  : "All Games"}
-            </h2>
-            <Suspense fallback={<GameGridSkeleton />}>
-              <GameGrid
-                searchQuery={searchQuery}
-                categoryFilter={categoryFilter}
-              />
-            </Suspense>
-          </section>
-        </div>
-      </main>
-    </>
+      {/* All Games Grid */}
+      <section>
+        <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {searchQuery
+            ? `Search Results for "${searchQuery}"`
+            : categoryFilter
+              ? "Filtered Games"
+              : "All Games"}
+        </h2>
+        <Suspense fallback={<GameGridSkeleton />}>
+          <GameGrid searchQuery={searchQuery} categoryFilter={categoryFilter} />
+        </Suspense>
+      </section>
+    </div>
   );
 }

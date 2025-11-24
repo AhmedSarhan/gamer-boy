@@ -1,69 +1,66 @@
 import { db } from "@/db/index";
 import { games, categories, gameCategories } from "@/db/schema";
 import { eq, like, and, ne, inArray } from "drizzle-orm";
-
-export interface GameWithCategories {
-  id: number;
-  title: string;
-  slug: string;
-  description: string;
-  thumbnail: string;
-  gameId: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  categories: Array<{
-    id: number;
-    name: string;
-    slug: string;
-    createdAt: Date | null;
-  }>;
-}
+import type { GameWithCategories, Category } from "@/shared/types";
 
 /**
  * Generate iframe URL with gd_sdk_referrer_url parameter at runtime
- * This ensures the referrer URL uses the current domain, not a hardcoded one
  */
 export function generateIframeUrl(
   gameId: string,
   gameSlug: string,
   baseUrl?: string
 ): string {
-  // Use provided baseUrl or get from environment or window (client-side)
   const gamePageUrl = baseUrl
     ? `${baseUrl}/games/${gameSlug}`
     : typeof window !== "undefined"
       ? `${window.location.origin}/games/${gameSlug}`
-      : `/games/${gameSlug}`; // Fallback for server-side without baseUrl
-
+      : `/games/${gameSlug}`;
   return `https://html5.gamedistribution.com/${gameId}/?gd_sdk_referrer_url=${encodeURIComponent(gamePageUrl)}`;
 }
 
 /**
- * Get all games with their categories
+ * Get all games from the database
  */
 export async function getAllGames(): Promise<GameWithCategories[]> {
   const allGames = await db.select().from(games);
 
-  // Get all game-category relationships
-  const allRelations = await db.select().from(gameCategories);
-  const allCategories = await db.select().from(categories);
+  // Get all game IDs
+  const gameIds = allGames.map((game) => game.id);
+  if (gameIds.length === 0) {
+    return [];
+  }
 
-  // Build category map
+  // Get all category relationships
+  const allRelations = await db
+    .select()
+    .from(gameCategories)
+    .where(inArray(gameCategories.gameId, gameIds));
+
+  const allCategoryIds = [
+    ...new Set(allRelations.map((rel) => rel.categoryId)),
+  ];
+  const allCategories =
+    allCategoryIds.length > 0
+      ? await db
+          .select()
+          .from(categories)
+          .where(inArray(categories.id, allCategoryIds))
+      : [];
+
   const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-
-  // Build game categories map
   const gameCategoriesMap = new Map<number, typeof allCategories>();
+
   allRelations.forEach((rel) => {
-    const category = categoryMap.get(rel.categoryId);
-    if (category) {
+    const cat = categoryMap.get(rel.categoryId);
+    if (cat) {
       if (!gameCategoriesMap.has(rel.gameId)) {
         gameCategoriesMap.set(rel.gameId, []);
       }
-      gameCategoriesMap.get(rel.gameId)!.push(category);
+      gameCategoriesMap.get(rel.gameId)!.push(cat);
     }
   });
 
-  // Combine games with their categories
   return allGames.map((game) => ({
     ...game,
     categories: gameCategoriesMap.get(game.id) || [],
@@ -71,15 +68,15 @@ export async function getAllGames(): Promise<GameWithCategories[]> {
 }
 
 /**
- * Get game by ID with categories
+ * Get a game by ID
  */
 export async function getGameById(
   id: number
-): Promise<GameWithCategories | undefined> {
+): Promise<GameWithCategories | null> {
   const game = await db.select().from(games).where(eq(games.id, id)).limit(1);
 
   if (game.length === 0) {
-    return undefined;
+    return null;
   }
 
   // Get categories for this game
@@ -89,7 +86,7 @@ export async function getGameById(
     .where(eq(gameCategories.gameId, id));
 
   const categoryIds = relations.map((rel) => rel.categoryId);
-  const gameCategoriesList =
+  const gameCategories_list =
     categoryIds.length > 0
       ? await db
           .select()
@@ -99,16 +96,16 @@ export async function getGameById(
 
   return {
     ...game[0],
-    categories: gameCategoriesList,
+    categories: gameCategories_list,
   };
 }
 
 /**
- * Get game by slug with categories
+ * Get a game by slug
  */
 export async function getGameBySlug(
   slug: string
-): Promise<GameWithCategories | undefined> {
+): Promise<GameWithCategories | null> {
   const game = await db
     .select()
     .from(games)
@@ -116,7 +113,7 @@ export async function getGameBySlug(
     .limit(1);
 
   if (game.length === 0) {
-    return undefined;
+    return null;
   }
 
   // Get categories for this game
@@ -126,7 +123,7 @@ export async function getGameBySlug(
     .where(eq(gameCategories.gameId, game[0].id));
 
   const categoryIds = relations.map((rel) => rel.categoryId);
-  const gameCategoriesList =
+  const gameCategories_list =
     categoryIds.length > 0
       ? await db
           .select()
@@ -136,7 +133,7 @@ export async function getGameBySlug(
 
   return {
     ...game[0],
-    categories: gameCategoriesList,
+    categories: gameCategories_list,
   };
 }
 
@@ -229,17 +226,23 @@ export async function getGamesByCategory(
 export async function searchGames(
   query: string
 ): Promise<GameWithCategories[]> {
-  const lowerQuery = `%${query.toLowerCase()}%`;
-  const results = await db
+  if (!query || query.trim() === "") {
+    return getAllGames();
+  }
+
+  const searchPattern = `%${query}%`;
+  const searchResults = await db
     .select()
     .from(games)
-    .where(like(games.title, lowerQuery));
+    .where(like(games.title, searchPattern));
 
-  if (results.length === 0) {
+  if (searchResults.length === 0) {
     return [];
   }
 
-  const gameIds = results.map((game) => game.id);
+  const gameIds = searchResults.map((game) => game.id);
+
+  // Get all category relationships
   const allRelations = await db
     .select()
     .from(gameCategories)
@@ -269,23 +272,27 @@ export async function searchGames(
     }
   });
 
-  return results.map((game) => ({
+  return searchResults.map((game) => ({
     ...game,
     categories: gameCategoriesMap.get(game.id) || [],
   }));
 }
 
 /**
- * Get featured/popular games (first 6 games)
+ * Get featured games (first N games)
  */
-export async function getFeaturedGames(): Promise<GameWithCategories[]> {
-  const featured = await db.select().from(games).limit(6);
+export async function getFeaturedGames(
+  limit: number = 10
+): Promise<GameWithCategories[]> {
+  const featuredGames = await db.select().from(games).limit(limit);
 
-  if (featured.length === 0) {
+  if (featuredGames.length === 0) {
     return [];
   }
 
-  const gameIds = featured.map((game) => game.id);
+  const gameIds = featuredGames.map((game) => game.id);
+
+  // Get all category relationships
   const allRelations = await db
     .select()
     .from(gameCategories)
@@ -315,7 +322,7 @@ export async function getFeaturedGames(): Promise<GameWithCategories[]> {
     }
   });
 
-  return featured.map((game) => ({
+  return featuredGames.map((game) => ({
     ...game,
     categories: gameCategoriesMap.get(game.id) || [],
   }));
@@ -325,55 +332,50 @@ export async function getFeaturedGames(): Promise<GameWithCategories[]> {
  * Get related games (same categories, excluding current game)
  */
 export async function getRelatedGames(
-  currentGameId: number,
+  gameId: number,
   limit: number = 4
 ): Promise<GameWithCategories[]> {
-  const currentGame = await getGameById(currentGameId);
-  if (!currentGame || currentGame.categories.length === 0) {
+  // Get current game's categories
+  const gameRelations = await db
+    .select()
+    .from(gameCategories)
+    .where(eq(gameCategories.gameId, gameId));
+
+  if (gameRelations.length === 0) {
     return [];
   }
 
-  // Get all games that share at least one category with current game
-  const categoryIds = currentGame.categories.map((cat) => cat.id);
-  const relations = await db
+  const categoryIds = gameRelations.map((rel) => rel.categoryId);
+
+  // Get other games with same categories
+  const relatedRelations = await db
     .select()
     .from(gameCategories)
     .where(
       and(
         inArray(gameCategories.categoryId, categoryIds),
-        ne(gameCategories.gameId, currentGameId)
+        ne(gameCategories.gameId, gameId)
       )
     );
 
-  // Count how many categories each game shares
-  const gameCategoryCounts = new Map<number, number>();
-  relations.forEach((rel) => {
-    gameCategoryCounts.set(
-      rel.gameId,
-      (gameCategoryCounts.get(rel.gameId) || 0) + 1
-    );
-  });
+  const relatedGameIds = [
+    ...new Set(relatedRelations.map((rel) => rel.gameId)),
+  ].slice(0, limit);
 
-  // Sort by number of shared categories and get top games
-  const sortedGameIds = Array.from(gameCategoryCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([gameId]) => gameId);
-
-  if (sortedGameIds.length === 0) {
+  if (relatedGameIds.length === 0) {
     return [];
   }
 
   const relatedGames = await db
     .select()
     .from(games)
-    .where(inArray(games.id, sortedGameIds));
+    .where(inArray(games.id, relatedGameIds));
 
-  // Get categories for related games
+  // Get all category relationships for related games
   const allRelations = await db
     .select()
     .from(gameCategories)
-    .where(inArray(gameCategories.gameId, sortedGameIds));
+    .where(inArray(gameCategories.gameId, relatedGameIds));
 
   const allCategoryIds = [
     ...new Set(allRelations.map((rel) => rel.categoryId)),
@@ -408,6 +410,6 @@ export async function getRelatedGames(
 /**
  * Get all categories
  */
-export async function getAllCategories() {
-  return await db.select().from(categories);
+export async function getAllCategories(): Promise<Category[]> {
+  return db.select().from(categories);
 }
