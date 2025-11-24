@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { GamePlayer, RelatedGames } from "@/modules/games/components";
+import {
+  GamePlayer,
+  RelatedGames,
+  GameActions,
+} from "@/modules/games/components";
 import { getGameBySlug, getRelatedGames } from "@/modules/games/lib";
 import type { Metadata } from "next";
 
@@ -72,6 +76,13 @@ export default async function GamePage({ params }: GamePageProps) {
         gameId={game.gameId}
         gameSlug={game.slug}
         title={game.title}
+      />
+
+      {/* Game Actions (Share & Open in New Tab) */}
+      <GameActions
+        gameId={game.gameId}
+        gameSlug={game.slug}
+        gameTitle={game.title}
       />
 
       {/* Categories */}
