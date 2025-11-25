@@ -13,13 +13,20 @@ export function GamePlayer({ gameId, gameSlug, title }: GamePlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [iframeUrl, setIframeUrl] = useState<string>("");
 
-  // Generate iframe URL with proper referrer
-  const gamePageUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/games/${gameSlug}`
-      : `/games/${gameSlug}`;
-  const iframeUrl = `https://html5.gamedistribution.com/${gameId}/?gd_sdk_referrer_url=${encodeURIComponent(gamePageUrl)}`;
+  // Generate iframe URL on client side only to avoid hydration mismatch
+  useEffect(() => {
+    const gamePageUrl = `${window.location.origin}/games/${gameSlug}`;
+    const url = `https://html5.gamedistribution.com/${gameId}/?gd_sdk_referrer_url=${encodeURIComponent(gamePageUrl)}`;
+    const timeout = setTimeout(() => {
+      setIframeUrl(url);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [gameId, gameSlug]);
 
   const toggleFullscreen = async () => {
     const container = document.getElementById("game-container");
@@ -102,18 +109,20 @@ export function GamePlayer({ gameId, gameSlug, title }: GamePlayerProps) {
         )}
 
         {/* Game Iframe */}
-        <iframe
-          src={iframeUrl}
-          title={title}
-          className="h-full w-full"
-          allow="autoplay; fullscreen; gamepad; microphone; focus-without-user-activation"
-          allowFullScreen
-          onLoad={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            setHasError(true);
-          }}
-        />
+        {iframeUrl && (
+          <iframe
+            src={iframeUrl}
+            title={title}
+            className="h-full w-full"
+            allow="autoplay; fullscreen; gamepad; microphone; focus-without-user-activation"
+            allowFullScreen
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              setHasError(true);
+            }}
+          />
+        )}
 
         {/* Fullscreen Button */}
         {!isLoading && !hasError && (
