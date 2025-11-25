@@ -76,76 +76,86 @@ export async function getGames({
   page?: number;
   limit?: number;
 }): Promise<{ games: GameWithCategories[]; totalCount: number }> {
-  const offset = (page - 1) * limit;
+  try {
+    const offset = (page - 1) * limit;
 
-  // Build the base query conditions
-  let gameIds: number[] | null = null;
+    // Build the base query conditions
+    let gameIds: number[] | null = null;
 
-  // Handle category filtering first
-  if (categoryFilter && categoryFilter.length > 0) {
-    const foundCategories = await db
-      .select()
-      .from(categories)
-      .where(inArray(categories.slug, categoryFilter));
+    // Handle category filtering first
+    if (categoryFilter && categoryFilter.length > 0) {
+      const foundCategories = await db
+        .select()
+        .from(categories)
+        .where(inArray(categories.slug, categoryFilter));
 
-    if (foundCategories.length === 0) {
+      if (foundCategories.length === 0) {
+        return { games: [], totalCount: 0 };
+      }
+
+      const categoryIds = foundCategories.map((cat) => cat.id);
+      const relations = await db
+        .select()
+        .from(gameCategories)
+        .where(inArray(gameCategories.categoryId, categoryIds));
+
+      gameIds = [...new Set(relations.map((rel) => rel.gameId))];
+
+      if (gameIds.length === 0) {
+        return { games: [], totalCount: 0 };
+      }
+    }
+
+    // Build the WHERE conditions
+    const conditions = [];
+    if (search) {
+      conditions.push(like(games.title, `%${search}%`));
+    }
+    if (gameIds !== null) {
+      conditions.push(inArray(games.id, gameIds));
+    }
+
+    const whereClause =
+      conditions.length === 0
+        ? undefined
+        : conditions.length === 1
+          ? conditions[0]
+          : and(...conditions);
+
+    // Get total count
+    const countQuery = whereClause
+      ? db
+          .select({ count: sql<number>`count(*)` })
+          .from(games)
+          .where(whereClause)
+      : db.select({ count: sql<number>`count(*)` }).from(games);
+
+    const [{ count: totalCount }] = await countQuery;
+
+    // Get paginated games
+    const gamesQuery = whereClause
+      ? db.select().from(games).where(whereClause).limit(limit).offset(offset)
+      : db.select().from(games).limit(limit).offset(offset);
+
+    const paginatedGames = await gamesQuery;
+
+    if (paginatedGames.length === 0) {
       return { games: [], totalCount: 0 };
     }
 
-    const categoryIds = foundCategories.map((cat) => cat.id);
-    const relations = await db
-      .select()
-      .from(gameCategories)
-      .where(inArray(gameCategories.categoryId, categoryIds));
+    // Attach categories using the optimized helper (1 JOIN query instead of 3 separate queries)
+    const gamesWithCategories = await attachCategoriesToGames(paginatedGames);
 
-    gameIds = [...new Set(relations.map((rel) => rel.gameId))];
-
-    if (gameIds.length === 0) {
-      return { games: [], totalCount: 0 };
-    }
-  }
-
-  // Build the WHERE conditions
-  const conditions = [];
-  if (search) {
-    conditions.push(like(games.title, `%${search}%`));
-  }
-  if (gameIds !== null) {
-    conditions.push(inArray(games.id, gameIds));
-  }
-
-  const whereClause =
-    conditions.length === 0
-      ? undefined
-      : conditions.length === 1
-        ? conditions[0]
-        : and(...conditions);
-
-  // Get total count
-  const countQuery = whereClause
-    ? db
-        .select({ count: sql<number>`count(*)` })
-        .from(games)
-        .where(whereClause)
-    : db.select({ count: sql<number>`count(*)` }).from(games);
-
-  const [{ count: totalCount }] = await countQuery;
-
-  // Get paginated games
-  const gamesQuery = whereClause
-    ? db.select().from(games).where(whereClause).limit(limit).offset(offset)
-    : db.select().from(games).limit(limit).offset(offset);
-
-  const paginatedGames = await gamesQuery;
-
-  if (paginatedGames.length === 0) {
+    return { games: gamesWithCategories, totalCount };
+  } catch (error: unknown) {
+    // Return empty result if database doesn't exist (e.g., during build)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(
+      "Database not available, returning empty games:",
+      errorMessage
+    );
     return { games: [], totalCount: 0 };
   }
-
-  // Attach categories using the optimized helper (1 JOIN query instead of 3 separate queries)
-  const gamesWithCategories = await attachCategoriesToGames(paginatedGames);
-
-  return { games: gamesWithCategories, totalCount };
 }
 
 /**
@@ -351,5 +361,24 @@ export async function getRelatedGames(
  * Get all categories
  */
 export async function getAllCategories(): Promise<Category[]> {
-  return db.select().from(categories);
+  try {
+    return await db.select().from(categories);
+  } catch (error: unknown) {
+    // Return empty array if database doesn't exist or tables aren't created (e.g., during build)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = (error as { code?: string })?.code || "";
+
+    if (
+      errorMessage.includes("no such table") ||
+      errorMessage.includes("SQLITE_ERROR") ||
+      errorCode === "SQLITE_ERROR"
+    ) {
+      console.warn(
+        "Database tables not initialized, returning empty categories"
+      );
+      return [];
+    }
+    // Re-throw unexpected errors
+    throw error;
+  }
 }

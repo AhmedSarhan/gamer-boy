@@ -154,7 +154,11 @@ class Logger {
   /**
    * Error level logging - error messages
    */
-  error(message: string, errorOrContext?: Error | LogContext, context?: LogContext): void {
+  error(
+    message: string,
+    errorOrContext?: Error | LogContext,
+    context?: LogContext
+  ): void {
     if (this.level <= LogLevel.ERROR) {
       let error: Error | undefined;
       let ctx: LogContext | undefined;
@@ -175,7 +179,12 @@ class Logger {
   /**
    * Log HTTP request
    */
-  http(method: string, path: string, statusCode: number, duration?: number): void {
+  http(
+    method: string,
+    path: string,
+    statusCode: number,
+    duration?: number
+  ): void {
     if (this.level <= LogLevel.INFO) {
       const entry = this.createLogEntry("http", `${method} ${path}`, {
         method,
@@ -220,11 +229,17 @@ export const logger = new Logger();
 
 // Export convenience functions for backwards compatibility
 export const log = {
-  debug: (message: string, context?: LogContext) => logger.debug(message, context),
-  info: (message: string, context?: LogContext) => logger.info(message, context),
-  warn: (message: string, context?: LogContext) => logger.warn(message, context),
-  error: (message: string, errorOrContext?: Error | LogContext, context?: LogContext) =>
-    logger.error(message, errorOrContext, context),
+  debug: (message: string, context?: LogContext) =>
+    logger.debug(message, context),
+  info: (message: string, context?: LogContext) =>
+    logger.info(message, context),
+  warn: (message: string, context?: LogContext) =>
+    logger.warn(message, context),
+  error: (
+    message: string,
+    errorOrContext?: Error | LogContext,
+    context?: LogContext
+  ) => logger.error(message, errorOrContext, context),
   http: (method: string, path: string, statusCode: number, duration?: number) =>
     logger.http(method, path, statusCode, duration),
   query: (query: string, duration?: number, context?: LogContext) =>

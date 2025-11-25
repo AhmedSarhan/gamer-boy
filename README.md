@@ -9,6 +9,7 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 ## ✨ Features
 
 ### Core Gaming Features
+
 - 🎮 **Game Library** - Browse hundreds of HTML5 games from GameDistribution
 - 🔍 **Advanced Search** - Real-time search with debouncing and URL state sync
 - 🏷️ **Multi-Category Filtering** - Filter by multiple genres simultaneously
@@ -20,6 +21,7 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 - 🔗 **Social Sharing** - Share games across platforms
 
 ### User Experience
+
 - 🌙 **Dark Mode** - System-aware theme switching with persistence
 - 🎨 **Smooth Animations** - Page transitions and micro-interactions with Framer Motion
 - 📊 **Infinite Scroll** - Seamless pagination with lazy loading
@@ -30,18 +32,21 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 ### Performance & Technical Excellence
 
 #### Database Optimization
+
 - ✅ **N+1 Query Prevention** - Eliminated with SQL JOINs (50-70% query reduction)
 - ✅ **Database-Level Pagination** - Server-side limiting and offsetting
 - ✅ **Optimized Queries** - Single JOIN queries vs multiple separate queries
 - ✅ **Efficient Relationships** - Proper foreign key indexes
 
 #### Caching Strategy
+
 - ✅ **Multi-Layer Caching** - Next.js Data Cache + CDN/Browser Cache-Control
 - ✅ **Smart Revalidation** - 5min-2hr TTL based on data volatility
 - ✅ **Stale-While-Revalidate** - Background updates for better UX
 - ✅ **Cache Headers** - Public caching with proper s-maxage configuration
 
 #### Modern React Patterns
+
 - ✅ **React 19's use() Hook** - Replaces useEffect/useState for data fetching
 - ✅ **Suspense Boundaries** - Proper loading states with streaming SSR
 - ✅ **External Store Sync** - useSyncExternalStore for cache management
@@ -49,6 +54,7 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 - ✅ **Hybrid Components** - Server wrappers with client interactivity
 
 #### API & Security
+
 - ✅ **Rate Limiting** - In-memory limiter (10-300 req/min, Redis-ready)
 - ✅ **Request Validation** - Zod schemas on all endpoints
 - ✅ **Error Middleware** - Standardized error handling with typed responses
@@ -56,6 +62,7 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 - ✅ **Input Sanitization** - Comprehensive validation layer
 
 #### Code Quality
+
 - ✅ **Professional Logging** - Structured logging with multiple levels (DEBUG, INFO, WARN, ERROR)
 - ✅ **Error Boundaries** - Graceful error handling with recovery options
 - ✅ **Memory Leak Prevention** - Proper cleanup in useEffect hooks
@@ -63,6 +70,7 @@ GamerBoy is a production-ready gaming platform featuring advanced performance op
 - ✅ **TypeScript Strict Mode** - Full type safety throughout
 
 #### Architecture
+
 - ✅ **Feature-Slice Design** - Modular architecture with clear boundaries
 - ✅ **Reusable Components** - DRY principles with shared UI library
 - ✅ **Barrel Exports** - Clean imports through index files
@@ -170,22 +178,26 @@ gamer-boy/
 ## 🏗️ Architecture Principles
 
 ### Feature-Slice Design
+
 - **Modules** (`src/modules/`): Self-contained features with components and logic
 - **Shared** (`src/shared/`): Reusable components, hooks, and utilities
 - **Clear Boundaries**: No circular dependencies, one-way imports
 
 ### Performance First
+
 - **Database-Level Operations**: Filtering, sorting, pagination in SQL
 - **Caching Layers**: Data cache, CDN cache, browser cache
 - **Code Splitting**: Automatic route-based chunking
 - **Lazy Loading**: Deferred component loading
 
 ### Type Safety
+
 - **Strict TypeScript**: No `any` types, comprehensive inference
 - **Zod Validation**: Runtime type checking at API boundaries
 - **Type-Safe Queries**: Drizzle ORM with typed results
 
 ### Developer Experience
+
 - **Hot Module Replacement**: Instant feedback with Turbopack
 - **Clear Patterns**: Consistent component structure
 - **Comprehensive Testing**: E2E coverage for critical paths
@@ -201,23 +213,27 @@ gamer-boy/
 ### Installation
 
 1. **Clone the repository**:
+
 ```bash
 git clone <repository-url>
 cd gamer-boy
 ```
 
 2. **Install dependencies**:
+
 ```bash
 npm install
 ```
 
 3. **Set up database**:
+
 ```bash
 # Scrape games from GameDistribution (or load from JSON)
 npm run scrape:games
 ```
 
 4. **Install Playwright browsers** (for testing):
+
 ```bash
 npx playwright install
 ```
@@ -225,6 +241,7 @@ npx playwright install
 ### Development
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -241,11 +258,13 @@ npm start
 ## 📜 Available Scripts
 
 ### Development
+
 - `npm run dev` - Start development server with Turbopack
 - `npm run build` - Build for production
 - `npm start` - Start production server
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint errors automatically
 - `npm run format` - Format code with Prettier
@@ -254,6 +273,7 @@ npm start
 - `npm run validate` - Run format, lint, and type-check
 
 ### Testing
+
 - `npm run test:e2e` - Run all E2E tests
 - `npm run test:e2e:ui` - Run tests with Playwright UI
 - `npm run test:e2e:headed` - Run tests in headed mode
@@ -264,6 +284,7 @@ npm start
 - `npm run test:e2e:report` - Show test report
 
 ### Database
+
 - `npm run db:generate` - Generate database migrations
 - `npm run db:migrate` - Run migrations
 - `npm run db:push` - Push schema changes to database
@@ -271,30 +292,35 @@ npm start
 - `npm run db:drop` - Drop all tables
 
 ### Data Management
+
 - `npm run scrape:games` - Load games from JSON or scrape if needed
 - `npm run scrape:games:fresh` - Fresh scrape from GameDistribution
 
 ### Utilities
+
 - `npm run clean` - Remove build artifacts and caches
 
 ## 💾 Database
 
 ### Overview
+
 This project uses **SQLite** with **Drizzle ORM** for type-safe database operations. The database file (`games.db`) is created automatically.
 
 ### Schema
 
 **categories** table:
+
 ```typescript
 {
-  id: string (PK)
-  name: string
-  slug: string
-  createdAt: timestamp
+  id: string(PK);
+  name: string;
+  slug: string;
+  createdAt: timestamp;
 }
 ```
 
 **games** table:
+
 ```typescript
 {
   id: number (PK, auto-increment)
@@ -310,6 +336,7 @@ This project uses **SQLite** with **Drizzle ORM** for type-safe database operati
 ```
 
 **gameCategories** table (junction):
+
 ```typescript
 {
   gameId: number (FK -> games.id)
@@ -319,6 +346,7 @@ This project uses **SQLite** with **Drizzle ORM** for type-safe database operati
 ```
 
 **ratings** table:
+
 ```typescript
 {
   id: number (PK, auto-increment)
@@ -334,11 +362,13 @@ This project uses **SQLite** with **Drizzle ORM** for type-safe database operati
 ### Viewing the Database
 
 Open Drizzle Studio (visual database browser):
+
 ```bash
 npm run db:studio
 ```
 
 Access at `http://localhost:4983` to:
+
 - Browse all tables
 - View relationships
 - Edit data directly
@@ -349,23 +379,29 @@ Access at `http://localhost:4983` to:
 #### Option 1: Using the Scraper (Recommended)
 
 **Load from JSON (fast)**:
+
 ```bash
 npm run scrape:games
 ```
+
 Loads games from `src/data/games.json` if available.
 
 **Fresh scrape**:
+
 ```bash
 npm run scrape:games:fresh
 ```
+
 Scrapes live data from GameDistribution.com and saves to JSON.
 
 #### Option 2: Drizzle Studio
+
 1. Run `npm run db:studio`
 2. Navigate to `games` table
 3. Click "Add row" and fill in data
 
 #### Option 3: Programmatically
+
 ```typescript
 import { db } from "@/db";
 import { games } from "@/db/schema";
@@ -459,11 +495,13 @@ Games can belong to multiple categories for better discoverability.
 ### Games
 
 **GET /api/games**
+
 - Query params: `page`, `limit`, `q` (search), `categories` (comma-separated)
 - Rate limit: 100 req/min
 - Cache: 1 hour (3600s)
 
 **GET /api/games/by-ids**
+
 - Query params: `ids` (comma-separated game IDs)
 - Rate limit: 100 req/min
 - Cache: 2 hours (7200s)
@@ -471,11 +509,13 @@ Games can belong to multiple categories for better discoverability.
 ### Ratings
 
 **GET /api/ratings/:gameId**
+
 - Query params: `fingerprint` (optional, for user rating)
 - Rate limit: 100 req/min
 - Cache: 5 minutes (300s)
 
 **POST /api/ratings/:gameId**
+
 - Body: `{ rating: number, fingerprint: string }`
 - Rate limit: 10 req/min
 - Cache: No store
@@ -483,12 +523,15 @@ Games can belong to multiple categories for better discoverability.
 ### Error Responses
 
 All endpoints return standardized error format:
+
 ```json
 {
   "error": "ErrorName",
   "code": "ERROR_CODE",
   "message": "Human-readable message",
-  "details": { /* optional context */ },
+  "details": {
+    /* optional context */
+  },
   "timestamp": "2025-01-25T12:00:00.000Z"
 }
 ```
@@ -496,16 +539,19 @@ All endpoints return standardized error format:
 ## 🎯 Performance Metrics
 
 ### Database Optimization
+
 - **Before**: 3-6 queries per page load (N+1 problem)
 - **After**: 1-2 queries per page load (SQL JOINs)
 - **Improvement**: 50-70% reduction in queries
 
 ### Caching Impact
+
 - **Cache Hit Rate**: ~80-95% on repeat visits
 - **TTFB**: <100ms for cached responses
 - **Database Load**: Reduced by 80-95% with cache
 
 ### Bundle Size
+
 - **Initial Load**: ~250KB (gzipped)
 - **Route-based Splitting**: Automatic per page
 - **Code Splitting**: Dynamic imports where beneficial
@@ -520,6 +566,7 @@ All endpoints return standardized error format:
 6. **Document changes** - Update README and docs
 
 ### Code Style
+
 - **File naming**: kebab-case (`game-card.tsx`)
 - **Component naming**: PascalCase (`GameCard`)
 - **Function naming**: camelCase (`fetchGames`)
