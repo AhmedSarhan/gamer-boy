@@ -18,4 +18,5 @@ export { RatingDisplay } from "./rating-display";
 export { RatingInput } from "./rating-input";
 export { Spinner, SpinnerFullPage } from "./spinner";
 export { EmptyState } from "./empty-state";
+export { CategoryBadge, CategoryBadgeList } from "./category-badge";
 export * as Icons from "./icons";

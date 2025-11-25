@@ -1,6 +1,7 @@
 import { db } from "@/db/index";
 import { games, categories, gameCategories, type Game } from "@/db/schema";
 import { eq, like, and, ne, inArray, sql } from "drizzle-orm";
+import { PAGINATION } from "@/shared/constants";
 import type { GameWithCategories, Category } from "@/shared/types";
 
 /**
@@ -67,8 +68,8 @@ async function attachCategoriesToGames(
 export async function getGames({
   search,
   categories: categoryFilter,
-  page = 1,
-  limit = 12,
+  page = PAGINATION.DEFAULT_PAGE,
+  limit = PAGINATION.DEFAULT_PAGE_SIZE,
 }: {
   search?: string;
   categories?: string[];

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GamesList } from "@/modules/games/components";
 import { getRecentlyPlayedIds } from "@/shared/lib";
+import { gamesApi } from "@/shared/lib/api-client";
 import { SpinnerFullPage } from "@/shared/ui/spinner";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ClockIcon } from "@/shared/ui/icons";
@@ -24,8 +25,9 @@ export function RecentlyPlayedClient() {
       }
 
       try {
-        const response = await fetch(`/api/games/by-ids?ids=${ids.join(",")}`);
-        const data = await response.json();
+        const data = (await gamesApi.getGamesByIds(ids)) as {
+          games: GameWithCategories[];
+        };
 
         // Preserve the order from localStorage (most recent first)
         const orderedGames = ids

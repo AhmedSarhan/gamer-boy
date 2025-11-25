@@ -4,6 +4,7 @@ import { useTransition, useEffect } from "react";
 import { InfiniteScroll } from "@/shared/ui/infinite-scroll";
 import { GameCard } from "@/shared/ui/game-card";
 import { GameCardErrorBoundary } from "@/shared/ui/game-card/game-card-error-boundary";
+import { LAYOUT } from "@/shared/constants";
 import type { GameWithCategories } from "@/shared/types";
 
 interface GamesGridInfiniteProps {
@@ -109,7 +110,7 @@ export function GamesGridInfinite({
         }
       >
         {(games) => (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={LAYOUT.GAMES_GRID_CLASSES}>
             {games.map((game) => (
               <GameCardErrorBoundary key={game.id}>
                 <GameCard game={game} />

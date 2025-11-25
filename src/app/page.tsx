@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { SearchBar, CategoryFilter } from "@/shared/ui";
+import { LAYOUT, PAGINATION } from "@/shared/constants";
 import { getAllCategories, getFeaturedGames } from "@/modules/games/lib";
 import { GamesGridInfinite } from "./games-grid-infinite";
 import { FeaturedGamesClient } from "./featured-games-client";
@@ -35,8 +36,8 @@ async function GameGrid({
 
 function GameGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {Array.from({ length: 12 }).map((_, i) => (
+    <div className={LAYOUT.GAMES_GRID_CLASSES}>
+      {Array.from({ length: PAGINATION.DEFAULT_PAGE_SIZE }).map((_, i) => (
         <div
           key={i}
           className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"

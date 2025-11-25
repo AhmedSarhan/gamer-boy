@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GameCard } from "@/shared/ui/game-card";
 import { GameCardErrorBoundary } from "@/shared/ui/game-card/game-card-error-boundary";
+import { LAYOUT } from "@/shared/constants";
 import type { GameWithCategories } from "@/shared/types";
 
 interface GamesListProps {
@@ -58,7 +59,7 @@ export function GamesList({ games, title, emptyState }: GamesListProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className={LAYOUT.GAMES_GRID_CLASSES}>
         {games.map((game) => (
           <GameCardErrorBoundary key={game.id}>
             <GameCard game={game} />

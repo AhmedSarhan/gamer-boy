@@ -1,4 +1,5 @@
 import { getGames } from "@/modules/games/lib/games";
+import { PAGINATION } from "@/shared/constants";
 import { NextRequest, NextResponse } from "next/server";
 
 // API routes must be dynamic (uses searchParams)
@@ -10,8 +11,14 @@ export const revalidate = 3600;
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
+    const page = parseInt(
+      searchParams.get("page") || String(PAGINATION.DEFAULT_PAGE),
+      10
+    );
+    const limit = parseInt(
+      searchParams.get("limit") || String(PAGINATION.DEFAULT_PAGE_SIZE),
+      10
+    );
     const searchQuery = searchParams.get("q") || undefined;
     const categoryFilter = searchParams.get("categories") || undefined;
 
