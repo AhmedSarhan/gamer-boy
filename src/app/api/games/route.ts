@@ -3,10 +3,9 @@ import { PAGINATION } from "@/shared/constants";
 import {
   withErrorHandler,
   createSuccessResponse,
-  getQueryParamAsInt,
-  getQueryParam,
 } from "@/shared/lib/api-handler";
 import { DatabaseError } from "@/shared/lib/errors";
+import { validateQueryParams, gamesQuerySchema } from "@/shared/lib/validation";
 import { NextRequest } from "next/server";
 
 // API routes must be dynamic (uses searchParams)
@@ -16,14 +15,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
-  const page = getQueryParamAsInt(request, "page", PAGINATION.DEFAULT_PAGE);
-  const limit = getQueryParamAsInt(
-    request,
-    "limit",
-    PAGINATION.DEFAULT_PAGE_SIZE
-  );
-  const searchQuery = getQueryParam(request, "q");
-  const categoryFilter = getQueryParam(request, "categories");
+  // Validate query parameters
+  const validatedParams = validateQueryParams(request, gamesQuerySchema);
+
+  const page = validatedParams.page ?? PAGINATION.DEFAULT_PAGE;
+  const limit = validatedParams.limit ?? PAGINATION.DEFAULT_PAGE_SIZE;
+  const searchQuery = validatedParams.q;
+  const categoryFilter = validatedParams.categories;
 
   try {
     // Use the unified getGames function with database-level pagination

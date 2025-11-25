@@ -2,9 +2,12 @@ import { getGamesByIds } from "@/modules/games/lib/games";
 import {
   withErrorHandler,
   createSuccessResponse,
-  getQueryParam,
 } from "@/shared/lib/api-handler";
 import { BadRequestError, DatabaseError } from "@/shared/lib/errors";
+import {
+  validateQueryParams,
+  gamesByIdsQuerySchema,
+} from "@/shared/lib/validation";
 import { NextRequest } from "next/server";
 
 // API routes must be dynamic (uses searchParams)
@@ -14,11 +17,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 7200;
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
-  const idsParam = getQueryParam(request, "ids");
-
-  if (!idsParam) {
-    throw new BadRequestError("Missing 'ids' parameter");
-  }
+  // Validate query parameters
+  const validatedParams = validateQueryParams(request, gamesByIdsQuerySchema);
+  const idsParam = validatedParams.ids;
 
   // Parse comma-separated IDs
   const ids = idsParam

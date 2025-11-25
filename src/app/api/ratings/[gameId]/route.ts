@@ -5,9 +5,16 @@ import { eq, and, sql } from "drizzle-orm";
 import {
   withErrorHandler,
   createSuccessResponse,
-  getQueryParam,
 } from "@/shared/lib/api-handler";
 import { BadRequestError, DatabaseError } from "@/shared/lib/errors";
+import {
+  validateQueryParams,
+  validateParams,
+  validateBody,
+  ratingsQuerySchema,
+  gameIdParamSchema,
+  submitRatingSchema,
+} from "@/shared/lib/validation";
 
 // API routes must be dynamic (uses searchParams and dynamic params)
 export const dynamic = "force-dynamic";
@@ -28,13 +35,14 @@ export const GET = withErrorHandler(
       throw new BadRequestError("Missing route parameters");
     }
 
+    // Validate route parameters
     const params = await context.params;
-    const gameId = params.gameId;
-    const gameIdNum = parseInt(gameId, 10);
+    const validatedParams = validateParams(params, gameIdParamSchema);
+    const gameIdNum = parseInt(validatedParams.gameId, 10);
 
-    if (isNaN(gameIdNum)) {
-      throw new BadRequestError("Invalid game ID format");
-    }
+    // Validate query parameters
+    const queryParams = validateQueryParams(request, ratingsQuerySchema);
+    const fingerprint = queryParams.fingerprint;
 
     try {
       // Get average rating and total count
@@ -49,7 +57,6 @@ export const GET = withErrorHandler(
       const stats = result[0] || { averageRating: 0, totalRatings: 0 };
 
       // Get user's rating if fingerprint is provided
-      const fingerprint = getQueryParam(request, "fingerprint");
       let userRating = null;
 
       if (fingerprint) {
@@ -101,33 +108,14 @@ export const POST = withErrorHandler(
       throw new BadRequestError("Missing route parameters");
     }
 
+    // Validate route parameters
     const params = await context.params;
-    const gameId = params.gameId;
-    const gameIdNum = parseInt(gameId, 10);
+    const validatedParams = validateParams(params, gameIdParamSchema);
+    const gameIdNum = parseInt(validatedParams.gameId, 10);
 
-    if (isNaN(gameIdNum)) {
-      throw new BadRequestError("Invalid game ID format");
-    }
-
-    const body = await request.json();
+    // Validate request body
+    const body = await validateBody(request, submitRatingSchema);
     const { rating: ratingValue, fingerprint } = body;
-
-    // Validate rating
-    if (
-      !ratingValue ||
-      typeof ratingValue !== "number" ||
-      ratingValue < 1 ||
-      ratingValue > 5
-    ) {
-      throw new BadRequestError("Rating must be a number between 1 and 5", {
-        providedRating: ratingValue,
-      });
-    }
-
-    // Validate fingerprint
-    if (!fingerprint || typeof fingerprint !== "string") {
-      throw new BadRequestError("User fingerprint is required");
-    }
 
     try {
       // Check if user already rated this game
