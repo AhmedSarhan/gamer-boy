@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logger } from "@/shared/lib/logger";
 
 interface RatingInputProps {
   gameId: number;
@@ -53,12 +54,12 @@ export function RatingInput({
         const data = await response.json();
         onRatingSubmit?.(data.averageRating);
       } else {
-        console.error("Failed to submit rating");
+        logger.error("Failed to submit rating");
         // Revert on error
         setRating(initialRating);
       }
     } catch (error) {
-      console.error("Error submitting rating:", error);
+      logger.error("Error submitting rating", error as Error);
       setRating(initialRating);
     } finally {
       setIsSubmitting(false);

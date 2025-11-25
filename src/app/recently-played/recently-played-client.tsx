@@ -1,54 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { GamesList } from "@/modules/games/components";
-import { getRecentlyPlayedIds } from "@/shared/lib";
-import { gamesApi } from "@/shared/lib/api-client";
-import { SpinnerFullPage } from "@/shared/ui/spinner";
+import {
+  useRecentlyPlayedData,
+  invalidateRecentlyPlayed,
+} from "./recently-played-data";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ClockIcon } from "@/shared/ui/icons";
-import type { GameWithCategories } from "@/shared/types";
 
 export function RecentlyPlayedClient() {
-  const [games, setGames] = useState<GameWithCategories[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Use the use() hook via useRecentlyPlayedData to fetch data
+  const games = useRecentlyPlayedData();
 
   useEffect(() => {
-    const fetchRecentlyPlayed = async () => {
-      setIsLoading(true);
-      const ids = getRecentlyPlayedIds();
-
-      if (ids.length === 0) {
-        setGames([]);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const data = (await gamesApi.getGamesByIds(ids)) as {
-          games: GameWithCategories[];
-        };
-
-        // Preserve the order from localStorage (most recent first)
-        const orderedGames = ids
-          .map((id) => data.games.find((g: GameWithCategories) => g.id === id))
-          .filter(Boolean) as GameWithCategories[];
-
-        setGames(orderedGames);
-      } catch (error) {
-        console.error("Error fetching recently played:", error);
-        setGames([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecentlyPlayed();
-
     // Refresh when page becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        fetchRecentlyPlayed();
+        invalidateRecentlyPlayed();
       }
     };
 
@@ -57,10 +26,6 @@ export function RecentlyPlayedClient() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
-
-  if (isLoading) {
-    return <SpinnerFullPage label="Loading recently played..." />;
-  }
 
   if (games.length === 0) {
     return (

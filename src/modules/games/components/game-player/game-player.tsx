@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logger } from "@/shared/lib/logger";
 
 interface GamePlayerProps {
   gameId: string;
@@ -33,7 +34,7 @@ export function GamePlayer({ gameId, gameSlug, title }: GamePlayerProps) {
         setIsFullscreen(false);
       }
     } catch (error) {
-      console.error("Fullscreen error:", error);
+      logger.error("Fullscreen error", error as Error);
     }
   };
 

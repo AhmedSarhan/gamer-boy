@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { GameWithCategories } from "@/shared/types";
 import { GameCard } from "./game-card";
 import { RatingDisplay } from "../rating-display";
+import { logger } from "@/shared/lib/logger";
 
 interface GameCardWithRatingProps {
   game: GameWithCategories;
@@ -33,7 +34,7 @@ export function GameCardWithRating({ game }: GameCardWithRatingProps) {
           });
         }
       } catch (error) {
-        console.error("Error fetching rating:", error);
+        logger.error("Error fetching rating", error as Error);
       } finally {
         setIsLoading(false);
       }

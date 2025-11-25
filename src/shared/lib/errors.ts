@@ -2,6 +2,8 @@
  * Standardized error handling for API routes
  */
 
+import { logger } from "./logger";
+
 export enum ErrorCode {
   // Client errors (400-499)
   BAD_REQUEST = "BAD_REQUEST",
@@ -89,22 +91,13 @@ export class InternalServerError extends AppError {
 
 // Error logging utility
 export function logError(error: Error | AppError, context?: string): void {
-  const timestamp = new Date().toISOString();
-  const prefix = context ? `[${context}]` : "";
-
   if (error instanceof AppError) {
-    console.error(`${timestamp} ${prefix} ${error.name}:`, {
+    logger.error(context ? `[${context}] ${error.name}` : error.name, error, {
       code: error.code,
-      message: error.message,
       statusCode: error.statusCode,
       details: error.details,
-      stack: error.stack,
     });
   } else {
-    console.error(`${timestamp} ${prefix} Error:`, {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
+    logger.error(context ? `[${context}] Error` : "Error", error);
   }
 }

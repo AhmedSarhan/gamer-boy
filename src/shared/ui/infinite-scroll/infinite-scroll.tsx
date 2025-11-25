@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, ReactNode, useState, useCallback } from "react";
+import { logger } from "@/shared/lib/logger";
 
 interface InfiniteScrollProps<T> {
   children: (items: T[]) => ReactNode;
@@ -38,7 +39,7 @@ export function InfiniteScroll<T>({
       setPage((prev) => prev + 1);
       setHasMore(result.hasMore);
     } catch (error) {
-      console.error("Error loading more items:", error);
+      logger.error("Error loading more items", error as Error);
       setHasMore(false);
     } finally {
       setIsLoading(false);

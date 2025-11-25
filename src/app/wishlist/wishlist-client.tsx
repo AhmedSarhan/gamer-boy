@@ -1,54 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { GamesList } from "@/modules/games/components";
-import { getFavoriteIds } from "@/shared/lib";
-import { gamesApi } from "@/shared/lib/api-client";
-import { SpinnerFullPage } from "@/shared/ui/spinner";
+import { useWishlistData, invalidateWishlist } from "./wishlist-data";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { HeartIcon } from "@/shared/ui/icons";
-import type { GameWithCategories } from "@/shared/types";
 
 export function WishlistClient() {
-  const [games, setGames] = useState<GameWithCategories[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Use the use() hook via useWishlistData to fetch data
+  const games = useWishlistData();
 
   useEffect(() => {
-    const fetchFavorites = async () => {
-      setIsLoading(true);
-      const ids = getFavoriteIds();
-
-      if (ids.length === 0) {
-        setGames([]);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const data = (await gamesApi.getGamesByIds(ids)) as {
-          games: GameWithCategories[];
-        };
-
-        // Preserve the order from localStorage
-        const orderedGames = ids
-          .map((id) => data.games.find((g: GameWithCategories) => g.id === id))
-          .filter(Boolean) as GameWithCategories[];
-
-        setGames(orderedGames);
-      } catch (error) {
-        console.error("Error fetching favorites:", error);
-        setGames([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFavorites();
-
     // Refresh when page becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        fetchFavorites();
+        invalidateWishlist();
       }
     };
 
@@ -57,10 +23,6 @@ export function WishlistClient() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
-
-  if (isLoading) {
-    return <SpinnerFullPage label="Loading favorites..." />;
-  }
 
   if (games.length === 0) {
     return (

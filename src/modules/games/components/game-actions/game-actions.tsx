@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionButton } from "@/shared/ui/action-button";
 import { addFavorite, removeFavorite, isFavorite } from "@/shared/lib";
+import { logger } from "@/shared/lib/logger";
 
 interface GameActionsProps {
   gameId: string;
@@ -108,7 +109,7 @@ export function GameActions({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      logger.error("Failed to copy", err as Error);
     }
   };
 

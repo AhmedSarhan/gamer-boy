@@ -10,6 +10,7 @@ import {
 import { useTrackRecentlyPlayed } from "@/shared/hooks";
 import { RatingDisplay } from "@/shared/ui/rating-display";
 import { RatingInput } from "@/shared/ui/rating-input";
+import { logger } from "@/shared/lib/logger";
 import type { GameWithCategories } from "@/shared/types";
 
 interface GamePageClientProps {
@@ -48,7 +49,7 @@ export function GamePageClient({ game, relatedGames }: GamePageClientProps) {
           });
         }
       } catch (error) {
-        console.error("Error fetching rating:", error);
+        logger.error("Error fetching rating", error as Error);
       } finally {
         setIsLoadingRating(false);
       }

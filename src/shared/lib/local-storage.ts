@@ -3,6 +3,8 @@
  * Stores only game IDs for efficiency - full game data is fetched from DB when needed
  */
 
+import { logger } from "./logger";
+
 const FAVORITES_KEY = "gamerboy_favorites";
 const RECENTLY_PLAYED_KEY = "gamerboy_recently_played";
 const MAX_RECENTLY_PLAYED = 20;
@@ -77,6 +79,6 @@ export function addRecentlyPlayed(gameId: number): void {
 
     localStorage.setItem(RECENTLY_PLAYED_KEY, JSON.stringify(items));
   } catch (error) {
-    console.error("Error adding to recently played:", error);
+    logger.error("Error adding to recently played", error as Error);
   }
 }
