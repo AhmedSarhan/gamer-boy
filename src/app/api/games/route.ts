@@ -1,6 +1,13 @@
 import { getGames } from "@/modules/games/lib/games";
 import { PAGINATION } from "@/shared/constants";
-import { NextRequest, NextResponse } from "next/server";
+import {
+  withErrorHandler,
+  createSuccessResponse,
+  getQueryParamAsInt,
+  getQueryParam,
+} from "@/shared/lib/api-handler";
+import { DatabaseError } from "@/shared/lib/errors";
+import { NextRequest } from "next/server";
 
 // API routes must be dynamic (uses searchParams)
 export const dynamic = "force-dynamic";
@@ -8,20 +15,17 @@ export const dynamic = "force-dynamic";
 // Cache for 1 hour, revalidate in background
 export const revalidate = 3600;
 
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(
-      searchParams.get("page") || String(PAGINATION.DEFAULT_PAGE),
-      10
-    );
-    const limit = parseInt(
-      searchParams.get("limit") || String(PAGINATION.DEFAULT_PAGE_SIZE),
-      10
-    );
-    const searchQuery = searchParams.get("q") || undefined;
-    const categoryFilter = searchParams.get("categories") || undefined;
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const page = getQueryParamAsInt(request, "page", PAGINATION.DEFAULT_PAGE);
+  const limit = getQueryParamAsInt(
+    request,
+    "limit",
+    PAGINATION.DEFAULT_PAGE_SIZE
+  );
+  const searchQuery = getQueryParam(request, "q");
+  const categoryFilter = getQueryParam(request, "categories");
 
+  try {
     // Use the unified getGames function with database-level pagination
     const { games, totalCount } = await getGames({
       search: searchQuery,
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     const hasMore = page * limit < totalCount;
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
         games,
         pagination: {
@@ -42,17 +46,14 @@ export async function GET(request: NextRequest) {
           hasMore,
         },
       },
+      200,
       {
-        headers: {
-          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200",
-        },
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200",
       }
     );
   } catch (error) {
-    console.error("Error fetching games:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch games" },
-      { status: 500 }
-    );
+    throw new DatabaseError("Failed to fetch games from database", {
+      originalError: error instanceof Error ? error.message : "Unknown error",
+    });
   }
-}
+});
