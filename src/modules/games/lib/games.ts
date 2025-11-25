@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import { games, categories, gameCategories } from "@/db/schema";
+import { games, categories, gameCategories, type Game } from "@/db/schema";
 import { eq, like, and, ne, inArray, sql } from "drizzle-orm";
 import type { GameWithCategories, Category } from "@/shared/types";
 
@@ -17,6 +17,47 @@ export function generateIframeUrl(
       ? `${window.location.origin}/games/${gameSlug}`
       : `/games/${gameSlug}`;
   return `https://html5.gamedistribution.com/${gameId}/?gd_sdk_referrer_url=${encodeURIComponent(gamePageUrl)}`;
+}
+
+/**
+ * Helper function to attach categories to games efficiently using a single JOIN query
+ * This eliminates the N+1 query problem by fetching all categories in one go
+ */
+async function attachCategoriesToGames(
+  gamesList: Game[]
+): Promise<GameWithCategories[]> {
+  if (gamesList.length === 0) {
+    return [];
+  }
+
+  const gameIds = gamesList.map((game) => game.id);
+
+  // Single JOIN query to get all categories for all games at once
+  const result = await db
+    .select({
+      gameId: gameCategories.gameId,
+      category: categories,
+    })
+    .from(gameCategories)
+    .leftJoin(categories, eq(gameCategories.categoryId, categories.id))
+    .where(inArray(gameCategories.gameId, gameIds));
+
+  // Group categories by game ID
+  const categoryMap = new Map<number, Category[]>();
+  result.forEach(({ gameId, category }) => {
+    if (category) {
+      if (!categoryMap.has(gameId)) {
+        categoryMap.set(gameId, []);
+      }
+      categoryMap.get(gameId)!.push(category);
+    }
+  });
+
+  // Map games with their categories
+  return gamesList.map((game) => ({
+    ...game,
+    categories: categoryMap.get(game.id) || [],
+  }));
 }
 
 /**
@@ -100,39 +141,8 @@ export async function getGames({
     return { games: [], totalCount: 0 };
   }
 
-  // Get categories for these games
-  const paginatedGameIds = paginatedGames.map((game) => game.id);
-  const relations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, paginatedGameIds));
-
-  const categoryIds = [...new Set(relations.map((rel) => rel.categoryId))];
-  const allCategories =
-    categoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, categoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  relations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  const gamesWithCategories = paginatedGames.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  // Attach categories using the optimized helper (1 JOIN query instead of 3 separate queries)
+  const gamesWithCategories = await attachCategoriesToGames(paginatedGames);
 
   return { games: gamesWithCategories, totalCount };
 }
@@ -157,41 +167,14 @@ export async function getGamesByIds(
     return [];
   }
 
-  // Get all category relationships for these games
-  const relations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, ids));
+  // Attach categories using the optimized helper
+  const gamesWithCategories = await attachCategoriesToGames(selectedGames);
 
-  const categoryIds = [...new Set(relations.map((rel) => rel.categoryId))];
-  const allCategories =
-    categoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, categoryIds))
-      : [];
-
-  // Map games with their categories, preserving the order of input IDs
-  const gamesMap = new Map(selectedGames.map((game) => [game.id, game]));
-  const categoriesMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-
+  // Preserve the order of input IDs
+  const gamesMap = new Map(gamesWithCategories.map((game) => [game.id, game]));
   return ids
-    .map((id) => {
-      const game = gamesMap.get(id);
-      if (!game) return null;
-
-      const gameRelations = relations.filter((rel) => rel.gameId === game.id);
-      const gameCategories = gameRelations
-        .map((rel) => categoriesMap.get(rel.categoryId))
-        .filter((cat): cat is Category => cat !== undefined);
-
-      return {
-        ...game,
-        categories: gameCategories,
-      };
-    })
-    .filter((game): game is GameWithCategories => game !== null);
+    .map((id) => gamesMap.get(id))
+    .filter((game): game is GameWithCategories => game !== undefined);
 }
 
 /**
@@ -199,47 +182,7 @@ export async function getGamesByIds(
  */
 export async function getAllGames(): Promise<GameWithCategories[]> {
   const allGames = await db.select().from(games);
-
-  // Get all game IDs
-  const gameIds = allGames.map((game) => game.id);
-  if (gameIds.length === 0) {
-    return [];
-  }
-
-  // Get all category relationships
-  const allRelations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, gameIds));
-
-  const allCategoryIds = [
-    ...new Set(allRelations.map((rel) => rel.categoryId)),
-  ];
-  const allCategories =
-    allCategoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, allCategoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  allRelations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  return allGames.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  return attachCategoriesToGames(allGames);
 }
 
 /**
@@ -254,25 +197,8 @@ export async function getGameById(
     return null;
   }
 
-  // Get categories for this game
-  const relations = await db
-    .select()
-    .from(gameCategories)
-    .where(eq(gameCategories.gameId, id));
-
-  const categoryIds = relations.map((rel) => rel.categoryId);
-  const gameCategories_list =
-    categoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, categoryIds))
-      : [];
-
-  return {
-    ...game[0],
-    categories: gameCategories_list,
-  };
+  const gamesWithCategories = await attachCategoriesToGames(game);
+  return gamesWithCategories[0];
 }
 
 /**
@@ -291,25 +217,8 @@ export async function getGameBySlug(
     return null;
   }
 
-  // Get categories for this game
-  const relations = await db
-    .select()
-    .from(gameCategories)
-    .where(eq(gameCategories.gameId, game[0].id));
-
-  const categoryIds = relations.map((rel) => rel.categoryId);
-  const gameCategories_list =
-    categoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, categoryIds))
-      : [];
-
-  return {
-    ...game[0],
-    categories: gameCategories_list,
-  };
+  const gamesWithCategories = await attachCategoriesToGames(game);
+  return gamesWithCategories[0];
 }
 
 /**
@@ -359,40 +268,7 @@ export async function getGamesByCategory(
     .from(games)
     .where(inArray(games.id, gameIds));
 
-  // Get all categories for these games
-  const allRelations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, gameIds));
-
-  const allCategoryIds = [
-    ...new Set(allRelations.map((rel) => rel.categoryId)),
-  ];
-  const allCategories =
-    allCategoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, allCategoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  allRelations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  return categoryGames.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  return attachCategoriesToGames(categoryGames);
 }
 
 /**
@@ -411,46 +287,7 @@ export async function searchGames(
     .from(games)
     .where(like(games.title, searchPattern));
 
-  if (searchResults.length === 0) {
-    return [];
-  }
-
-  const gameIds = searchResults.map((game) => game.id);
-
-  // Get all category relationships
-  const allRelations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, gameIds));
-
-  const allCategoryIds = [
-    ...new Set(allRelations.map((rel) => rel.categoryId)),
-  ];
-  const allCategories =
-    allCategoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, allCategoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  allRelations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  return searchResults.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  return attachCategoriesToGames(searchResults);
 }
 
 /**
@@ -460,47 +297,7 @@ export async function getFeaturedGames(
   limit: number = 10
 ): Promise<GameWithCategories[]> {
   const featuredGames = await db.select().from(games).limit(limit);
-
-  if (featuredGames.length === 0) {
-    return [];
-  }
-
-  const gameIds = featuredGames.map((game) => game.id);
-
-  // Get all category relationships
-  const allRelations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, gameIds));
-
-  const allCategoryIds = [
-    ...new Set(allRelations.map((rel) => rel.categoryId)),
-  ];
-  const allCategories =
-    allCategoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, allCategoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  allRelations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  return featuredGames.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  return attachCategoriesToGames(featuredGames);
 }
 
 /**
@@ -546,40 +343,7 @@ export async function getRelatedGames(
     .from(games)
     .where(inArray(games.id, relatedGameIds));
 
-  // Get all category relationships for related games
-  const allRelations = await db
-    .select()
-    .from(gameCategories)
-    .where(inArray(gameCategories.gameId, relatedGameIds));
-
-  const allCategoryIds = [
-    ...new Set(allRelations.map((rel) => rel.categoryId)),
-  ];
-  const allCategories =
-    allCategoryIds.length > 0
-      ? await db
-          .select()
-          .from(categories)
-          .where(inArray(categories.id, allCategoryIds))
-      : [];
-
-  const categoryMap = new Map(allCategories.map((cat) => [cat.id, cat]));
-  const gameCategoriesMap = new Map<number, typeof allCategories>();
-
-  allRelations.forEach((rel) => {
-    const cat = categoryMap.get(rel.categoryId);
-    if (cat) {
-      if (!gameCategoriesMap.has(rel.gameId)) {
-        gameCategoriesMap.set(rel.gameId, []);
-      }
-      gameCategoriesMap.get(rel.gameId)!.push(cat);
-    }
-  });
-
-  return relatedGames.map((game) => ({
-    ...game,
-    categories: gameCategoriesMap.get(game.id) || [],
-  }));
+  return attachCategoriesToGames(relatedGames);
 }
 
 /**

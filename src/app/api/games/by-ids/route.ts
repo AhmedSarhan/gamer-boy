@@ -1,6 +1,12 @@
 import { getGamesByIds } from "@/modules/games/lib/games";
 import { NextRequest, NextResponse } from "next/server";
 
+// API routes must be dynamic (uses searchParams)
+export const dynamic = "force-dynamic";
+
+// Cache for 2 hours, games data rarely changes
+export const revalidate = 7200;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -28,7 +34,15 @@ export async function GET(request: NextRequest) {
 
     const games = await getGamesByIds(ids);
 
-    return NextResponse.json({ games });
+    return NextResponse.json(
+      { games },
+      {
+        headers: {
+          "Cache-Control":
+            "public, s-maxage=7200, stale-while-revalidate=14400",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching games by IDs:", error);
     return NextResponse.json(

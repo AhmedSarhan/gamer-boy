@@ -3,6 +3,12 @@ import { db } from "@/db";
 import { ratings } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
+// API routes must be dynamic (uses searchParams and dynamic params)
+export const dynamic = "force-dynamic";
+
+// Cache for 5 minutes - ratings change more frequently
+export const revalidate = 300;
+
 /**
  * GET /api/ratings/[gameId]
  * Fetch rating statistics for a specific game
@@ -49,12 +55,19 @@ export async function GET(
       userRating = userRatingResult[0]?.rating || null;
     }
 
-    return NextResponse.json({
-      gameId: gameIdNum,
-      averageRating: parseFloat(stats.averageRating.toFixed(1)),
-      totalRatings: stats.totalRatings,
-      userRating,
-    });
+    return NextResponse.json(
+      {
+        gameId: gameIdNum,
+        averageRating: parseFloat(stats.averageRating.toFixed(1)),
+        totalRatings: stats.totalRatings,
+        userRating,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching ratings:", error);
     return NextResponse.json(
@@ -145,13 +158,20 @@ export async function POST(
 
     const stats = result[0];
 
-    return NextResponse.json({
-      success: true,
-      gameId: gameIdNum,
-      averageRating: parseFloat(stats.averageRating.toFixed(1)),
-      totalRatings: stats.totalRatings,
-      userRating: ratingValue,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        gameId: gameIdNum,
+        averageRating: parseFloat(stats.averageRating.toFixed(1)),
+        totalRatings: stats.totalRatings,
+        userRating: ratingValue,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error submitting rating:", error);
     return NextResponse.json(

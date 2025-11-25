@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface GamePlayerProps {
   gameId: string;
@@ -37,12 +37,18 @@ export function GamePlayer({ gameId, gameSlug, title }: GamePlayerProps) {
     }
   };
 
-  // Listen for fullscreen changes
-  if (typeof window !== "undefined") {
-    document.addEventListener("fullscreenchange", () => {
+  // Listen for fullscreen changes with proper cleanup
+  useEffect(() => {
+    const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
-    });
-  }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   return (
     <div className="w-full">

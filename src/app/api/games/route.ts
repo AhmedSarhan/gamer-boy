@@ -1,6 +1,12 @@
 import { getGames } from "@/modules/games/lib/games";
 import { NextRequest, NextResponse } from "next/server";
 
+// API routes must be dynamic (uses searchParams)
+export const dynamic = "force-dynamic";
+
+// Cache for 1 hour, revalidate in background
+export const revalidate = 3600;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -19,15 +25,22 @@ export async function GET(request: NextRequest) {
 
     const hasMore = page * limit < totalCount;
 
-    return NextResponse.json({
-      games,
-      pagination: {
-        page,
-        limit,
-        total: totalCount,
-        hasMore,
+    return NextResponse.json(
+      {
+        games,
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          hasMore,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching games:", error);
     return NextResponse.json(
