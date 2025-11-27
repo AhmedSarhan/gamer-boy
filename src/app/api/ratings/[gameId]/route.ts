@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { ratings } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, avg, count } from "drizzle-orm";
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -50,13 +50,16 @@ export const GET = withErrorHandler(
         // Get average rating and total count
         const result = await db
           .select({
-            averageRating: sql<number>`COALESCE(AVG(${ratings.rating}), 0)`,
-            totalRatings: sql<number>`COUNT(*)`,
+            averageRating: avg(ratings.rating),
+            totalRatings: count(ratings.id),
           })
           .from(ratings)
           .where(eq(ratings.gameId, gameIdNum));
 
         const stats = result[0] || { averageRating: 0, totalRatings: 0 };
+        const avgRating = stats.averageRating
+          ? parseFloat(stats.averageRating)
+          : 0;
 
         // Get user's rating if fingerprint is provided
         let userRating = null;
@@ -79,7 +82,7 @@ export const GET = withErrorHandler(
         return createSuccessResponse(
           {
             gameId: gameIdNum,
-            averageRating: parseFloat(stats.averageRating.toFixed(1)),
+            averageRating: parseFloat(avgRating.toFixed(1)),
             totalRatings: stats.totalRatings,
             userRating,
           },
@@ -157,19 +160,22 @@ export const POST = withErrorHandler(
         // Fetch updated stats
         const result = await db
           .select({
-            averageRating: sql<number>`AVG(${ratings.rating})`,
-            totalRatings: sql<number>`COUNT(*)`,
+            averageRating: avg(ratings.rating),
+            totalRatings: count(ratings.id),
           })
           .from(ratings)
           .where(eq(ratings.gameId, gameIdNum));
 
         const stats = result[0];
+        const avgRating = stats.averageRating
+          ? parseFloat(stats.averageRating)
+          : 0;
 
         return createSuccessResponse(
           {
             success: true,
             gameId: gameIdNum,
-            averageRating: parseFloat(stats.averageRating.toFixed(1)),
+            averageRating: parseFloat(avgRating.toFixed(1)),
             totalRatings: stats.totalRatings,
             userRating: ratingValue,
           },
